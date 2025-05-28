@@ -22,9 +22,10 @@ private:
     struct Tile
     {
         TileType type = TileType::empty;
-        int directionX = 0;
+        int directionX = 0; // flow direction
         int directionY = 0;
         bool isWall = false;
+        // bool isSpawn = false;
         unsigned char flowDistance = MAX_LEVELS;
     };
 
@@ -37,6 +38,7 @@ private:
     void setTileType(int x,int y,TileType type);
 
     vector<Tile> tiles;
+    vector<Tile> tiles48; 
     const int tileCountX;
     const int tileCountY;
     const int targetTileX;

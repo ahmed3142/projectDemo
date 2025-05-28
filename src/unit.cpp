@@ -41,7 +41,7 @@ void Unit::update(float deltaTime, Level &level, vector<Unit> &units)
     float moveDistance = speed * deltaTime;
     // cout << "Unit at position: (" << position.x << ", " << position.y << ") with target distance: " << targetDistance << endl;
 
-    if(targetDistance < 0.5f)
+    if(targetDistance < 1.5f)
     {
         alive=false;
     }

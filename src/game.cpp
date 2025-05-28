@@ -88,7 +88,7 @@ void Game::processEvents(bool &running){ //for every frame
     if(mouseDownStatus>0){
         if(mouseDownStatus==1){
             if(PlacementModeCurrent== PlacementMode::wall){
-                level.setTileWall((int) mousePosition.x, (int) mousePosition.y, true);
+                level.setTileWall((int) mousePosition.x, (int) mousePosition.y, true); 
             }
             else if(PlacementModeCurrent== PlacementMode::tower){
                 if(mouseDownThisFrame) addTower(mousePosition);

@@ -46,7 +46,7 @@ class Game {
     vector<Tower> towers;
 
     Texture2D textureOverlay;
-    bool overlayVisible=false;
+    bool overlayVisible=true;
     
 
 

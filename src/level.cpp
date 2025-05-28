@@ -5,7 +5,7 @@
 
 Level::Level(int setTileCountX, int setTileCountY)
     : tileCountX(setTileCountX), tileCountY(setTileCountY),
-      targetTileX(setTileCountX-4), targetTileY(setTileCountY/2)
+      targetTileX(setTileCountX/2), targetTileY(setTileCountY/2)
 {
 
     // textureTileWall = *TextureLoader::LoadTextureFromFile("Tile Wall.bmp");
@@ -62,7 +62,7 @@ Level::Level(int setTileCountX, int setTileCountY)
 
 Level::~Level()
 {
-    UnloadTexture(textureTileWall);
+    UnloadTexture(textureTileWall);+
     UnloadTexture(textureTileTarget);
     UnloadTexture(textureTileEmpty);
     UnloadTexture(textureTileArrowUp);
@@ -91,12 +91,13 @@ void Level::draw(int tileSize)
             if (getTileType(x, y) == TileType::enymyspawner)
             {
                 DrawTexture(textureTileEnemySpawner,
-                            (x) * tileSize, (y) * tileSize, WHITE);
+                            (x) * tileSize,(y) * tileSize, // top left *48
+                            WHITE);
             }
         }
     }
     DrawTexture(textureTileTarget,
-                (targetTileX-1) * tileSize, (targetTileY-1) * tileSize, WHITE);
+                (targetTileX-1) * tileSize, (targetTileY-1) * tileSize, WHITE); // top left *48
 
     rep(y, tileCountY)
     {
@@ -112,27 +113,27 @@ void Level::draw(int tileSize)
     }
 }
 
-void Level::drawTile(int x, int y, int tileSize)
+void Level::drawTile(int x, int y, int tileSize)  //top left * 48
 {
     DrawTexture(textureTileEmpty,
                 x * tileSize, y * tileSize, WHITE);
 
-    // auto &t = tiles[y * tileCountX + x];
-    // Texture2D *arrow = nullptr;
+    auto &t = tiles[y * tileCountX + x];
+    Texture2D *arrow = nullptr;
 
-    // if      (t.directionX ==  0 && t.directionY == -1) arrow = &textureTileArrowUp;
-    // else if (t.directionX ==  1 && t.directionY == -1) arrow = &textureTileArrowUpRight;
-    // else if (t.directionX ==  1 && t.directionY ==  0) arrow = &textureTileArrowRight;
-    // else if (t.directionX ==  1 && t.directionY ==  1) arrow = &textureTileArrowDownRight;
-    // else if (t.directionX ==  0 && t.directionY ==  1) arrow = &textureTileArrowDown;
-    // else if (t.directionX == -1 && t.directionY ==  1) arrow = &textureTileArrowDownLeft;
-    // else if (t.directionX == -1 && t.directionY ==  0) arrow = &textureTileArrowLeft;
-    // else if (t.directionX == -1 && t.directionY == -1) arrow = &textureTileArrowUpLeft;
+    if      (t.directionX ==  0 && t.directionY == -1) arrow = &textureTileArrowUp;
+    else if (t.directionX ==  1 && t.directionY == -1) arrow = &textureTileArrowUpRight;
+    else if (t.directionX ==  1 && t.directionY ==  0) arrow = &textureTileArrowRight;
+    else if (t.directionX ==  1 && t.directionY ==  1) arrow = &textureTileArrowDownRight;
+    else if (t.directionX ==  0 && t.directionY ==  1) arrow = &textureTileArrowDown;
+    else if (t.directionX == -1 && t.directionY ==  1) arrow = &textureTileArrowDownLeft;
+    else if (t.directionX == -1 && t.directionY ==  0) arrow = &textureTileArrowLeft;
+    else if (t.directionX == -1 && t.directionY == -1) arrow = &textureTileArrowUpLeft;
 
-    // if (arrow) {
-    //     DrawTexture(*arrow,
-    //                 x * tileSize, y * tileSize, WHITE);
-    // }
+    if (arrow) {
+        DrawTexture(*arrow,
+                    x * tileSize, y * tileSize, WHITE);
+    }
 }
 
 bool Level::isTileWall(int x, int y)
@@ -290,7 +291,7 @@ Level::TileType Level::getTileType(int x, int y) {
 }
 
 Vector2 Level::getRandomEnemySpawnerPosition() {
-    vector<int> spawnerIndices;
+    vector<int> spawnerIndices; // collect spawner indexes
     for(int i = 0; i < (int)tiles.size(); ++i) {
         auto &tile = tiles[i];
         if(tile.type == TileType::enymyspawner) {
@@ -298,7 +299,7 @@ Vector2 Level::getRandomEnemySpawnerPosition() {
         }
     }
 
-    if(spawnerIndices.empty()==false) {
+    if(spawnerIndices.empty()==false) { // assign random spawner
         int index = spawnerIndices[rand() % spawnerIndices.size()];
         return Vector2{
             (float)(index % tileCountX + 0.5f),
