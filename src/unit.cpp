@@ -67,7 +67,7 @@ void Unit::update(float deltaTime, Level &level, vector<Unit> &units)
             // They overlap so check and see if this unit is moving towards or away from the unit it overlaps.
             Vector2 directionToOther = Vector2Subtract(unitSelected.position, position);
             // Ensure that they're not directly on top of each other.
-            if (Vector2Length(directionToOther) > 0.01f)
+            if (Vector2Length(directionToOther) > 0.35f) // spacing between enemies
             {
                 // Check the angle between the units positions and the direction that this unit is traveling.
                 // Ensure that this unit isn't moving directly towards the other unit (by checking the angle between).
@@ -80,68 +80,27 @@ void Unit::update(float deltaTime, Level &level, vector<Unit> &units)
         }
     }
     // unit can move without walking through wall;
-    if (ok)
-    {
-        const float spacing = 0.3f;
-
-        int signX = (moveForward.x == 0) ? 0 : (moveForward.x > 0 ? 1 : -1);
-        int signY = (moveForward.y == 0) ? 0 : (moveForward.y > 0 ? 1 : -1);
-
-        // Check horizontal move with spacing
-        int x = (int)(position.x + moveForward.x + signX * spacing);
-        int y = (int)(position.y);
-        bool canMoveX = (moveForward.x == 0) || !level.isTileWall(x, y);
-
-        // Check vertical move with spacing
-        x = (int)(position.x);
-        y = (int)(position.y + moveForward.y + signY * spacing);
-        bool canMoveY = (moveForward.y == 0) || !level.isTileWall(x, y);
-
-        // Additional corner check for diagonal movement
-        bool canMoveCorner = true;
-        if (moveForward.x != 0 && moveForward.y != 0)
-        {
-            x = (int)(position.x + signX * spacing);
-            y = (int)(position.y + signY * spacing);
-            if (level.isTileWall(x, y))
-            {
-                canMoveCorner = false;
+        if (ok) {
+			//Check if it needs to move in the x direction.  If so then check if the new x position, plus an amount of spacing 
+			//(to keep from moving too close to the wall) is within a wall or not and update the position as required.
+			const float spacing = 0.47f;
+			int x = (int)(position.x + moveForward.x + copysign(spacing, moveForward.x));
+			int y = (int)(position.y);
+			if (moveForward.x != 0.0f && level.isTileWall(x, y) == false){
+				position.x += moveForward.x;
+                if(level.isTileWall(position.x,position.y+spacing)) position.y-=(0.03f);
+                if(level.isTileWall(position.x,position.y-spacing)) position.y+=0.03f;
             }
-        }
-
-        // Apply movement only if no walls blocking
-        if (canMoveX)
-        {
-            position.x += moveForward.x;
-        }
-        if (canMoveY)
-        {
-            position.y += moveForward.y;
-        }
-
-        // If diagonal movement attempted, and corner is blocked,
-        // prevent diagonal movement by cancelling one axis:
-        if (moveForward.x != 0 && moveForward.y != 0 && !canMoveCorner)
-        {
-            // For example, prevent diagonal slip by moving only along one axis
-            // Try horizontal only if vertical blocked
-            if (!canMoveY && canMoveX)
-            {
-                position.y -= moveForward.y; // rollback vertical move
+			//Do the same for the y direction.
+			x = (int)(position.x);
+			y = (int)(position.y + moveForward.y + copysign(spacing, moveForward.y));
+			if (moveForward.y != 0.0f && level.isTileWall(x, y) == false){
+				position.y += moveForward.y;
+                if(level.isTileWall(position.x+spacing,position.y)) position.x-=(0.03f);
+                if(level.isTileWall(position.x-spacing,position.y)) position.x+=0.03f;
             }
-            // Or try vertical only if horizontal blocked
-            else if (!canMoveX && canMoveY)
-            {
-                position.x -= moveForward.x; // rollback horizontal move
-            }
-            // Otherwise, rollback both
-            else if (!canMoveX && !canMoveY)
-            {
-                position.x -= moveForward.x;
-                position.y -= moveForward.y;
-            }
-        }
-    }
+		}
+    
 }
 
 bool Unit::isAlive()

@@ -38,7 +38,7 @@ private:
     void setTileType(int x,int y,TileType type);
 
     vector<Tile> tiles;
-    vector<Tile> tiles48; 
+    //vector<Tile> tiles48; 
     const int tileCountX;
     const int tileCountY;
     const int targetTileX;

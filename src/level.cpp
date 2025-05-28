@@ -62,7 +62,7 @@ Level::Level(int setTileCountX, int setTileCountY)
 
 Level::~Level()
 {
-    UnloadTexture(textureTileWall);+
+    UnloadTexture(textureTileWall);
     UnloadTexture(textureTileTarget);
     UnloadTexture(textureTileEmpty);
     UnloadTexture(textureTileArrowUp);
@@ -118,22 +118,22 @@ void Level::drawTile(int x, int y, int tileSize)  //top left * 48
     DrawTexture(textureTileEmpty,
                 x * tileSize, y * tileSize, WHITE);
 
-    auto &t = tiles[y * tileCountX + x];
-    Texture2D *arrow = nullptr;
+    // auto &t = tiles[y * tileCountX + x];
+    // Texture2D *arrow = nullptr;
 
-    if      (t.directionX ==  0 && t.directionY == -1) arrow = &textureTileArrowUp;
-    else if (t.directionX ==  1 && t.directionY == -1) arrow = &textureTileArrowUpRight;
-    else if (t.directionX ==  1 && t.directionY ==  0) arrow = &textureTileArrowRight;
-    else if (t.directionX ==  1 && t.directionY ==  1) arrow = &textureTileArrowDownRight;
-    else if (t.directionX ==  0 && t.directionY ==  1) arrow = &textureTileArrowDown;
-    else if (t.directionX == -1 && t.directionY ==  1) arrow = &textureTileArrowDownLeft;
-    else if (t.directionX == -1 && t.directionY ==  0) arrow = &textureTileArrowLeft;
-    else if (t.directionX == -1 && t.directionY == -1) arrow = &textureTileArrowUpLeft;
+    // if      (t.directionX ==  0 && t.directionY == -1) arrow = &textureTileArrowUp;
+    // else if (t.directionX ==  1 && t.directionY == -1) arrow = &textureTileArrowUpRight;
+    // else if (t.directionX ==  1 && t.directionY ==  0) arrow = &textureTileArrowRight;
+    // else if (t.directionX ==  1 && t.directionY ==  1) arrow = &textureTileArrowDownRight;
+    // else if (t.directionX ==  0 && t.directionY ==  1) arrow = &textureTileArrowDown;
+    // else if (t.directionX == -1 && t.directionY ==  1) arrow = &textureTileArrowDownLeft;
+    // else if (t.directionX == -1 && t.directionY ==  0) arrow = &textureTileArrowLeft;
+    // else if (t.directionX == -1 && t.directionY == -1) arrow = &textureTileArrowUpLeft;
 
-    if (arrow) {
-        DrawTexture(*arrow,
-                    x * tileSize, y * tileSize, WHITE);
-    }
+    // if (arrow) {
+    //     DrawTexture(*arrow,
+    //                 x * tileSize, y * tileSize, WHITE);
+    // }
 }
 
 bool Level::isTileWall(int x, int y)
