@@ -22,4 +22,5 @@ public:
     void draw(int tileSize);
     bool checkOverlap(Vector2 positionOfOtherUnit, float otherUnitSize);
     bool getIsAlive();
+    Vector2 getPosition();
 };

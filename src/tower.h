@@ -3,7 +3,9 @@
 #include <vector>
 #include "textureloader.h"
 #include <raymath.h>
-#include <iostream>
+#include <bits/stdc++.h>
+#include <memory>
+#include "unit.h"
 
 using namespace std;
 
@@ -13,7 +15,7 @@ class Tower {
     // int tileSize;
     // int health;
     // int damage;
-    // float attackRange;
+    static const float attackRange;
     // float attackCooldown;
     // float attackCooldownCurrent;
     Vector2 position;
@@ -22,10 +24,15 @@ class Tower {
     
     Texture2D textureTileTower;
 
+    weak_ptr<Unit> findEnemy(vector<shared_ptr<Unit>>& units);
+
+    weak_ptr<Unit> targetEnemy;
+    
+
 
     public:
         Tower(Vector2 setPosition);
-        void update(float deltaTime);
+        void update(float deltaTime, vector<shared_ptr<Unit>>& units);
         void draw(int tileSize);
         
         bool checkIfOnTile(int x, int y);

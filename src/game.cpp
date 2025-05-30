@@ -11,7 +11,7 @@
 Game::Game(int windowWidth, int windowHeight)
     : PlacementModeCurrent(PlacementMode::wall), 
         level(windowWidth/tileSize, windowHeight/tileSize) ,
-        spawnTimer(0.2f), roundTimer(5.0f)
+        spawnTimer(1.0f), roundTimer(5.0f)
 {
     textureOverlay= *TextureLoader::LoadTextureFromFile("Overlay.png"); //menu
     
@@ -146,7 +146,7 @@ void Game::updateRoundSpawn(float deltaTime){
         roundTimer.countDown(deltaTime);
         if(roundTimer.timeSIsZero()){
             roundTimer.resetToMax();
-            spawnUnitCount = 300;
+            spawnUnitCount = 100;
             roundTimer.resetToMax();
             bool roundStarted = false; // Reset round state
         }
@@ -164,7 +164,7 @@ void Game::update(float deltaTime){
     updateUnit(deltaTime); //update all units
 
     for(auto &tower : towers){ //tower update
-        tower.update(deltaTime);
+        tower.update(deltaTime, units);
     }
 
     updateRoundSpawn(deltaTime);

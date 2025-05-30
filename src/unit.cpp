@@ -6,7 +6,7 @@
 #include <memory>
 #include <cmath>
 
-const float Unit::speed = 5.0f;
+const float Unit::speed = 2.0f;
 const float Unit::size = 0.4f;
 
 Unit::Unit(Vector2 setPosition) : position(setPosition)
@@ -107,4 +107,9 @@ void Unit::update(float deltaTime, Level &level, vector<shared_ptr<Unit>> &units
 bool Unit::getIsAlive()
 {
     return alive;
+}
+
+Vector2 Unit::getPosition()
+{
+    return position;
 }
