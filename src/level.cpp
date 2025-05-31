@@ -52,10 +52,10 @@ Level::Level(int setTileCountX, int setTileCountY)
     tiles.assign(tileCountX * tileCountY, Tile());
 
     //enemy spawner tile
-    setTileType(0,0, TileType::enymyspawner);
-    setTileType(0, tileCountY-1, TileType::enymyspawner);
-    setTileType(tileCountX-2, 1, TileType::enymyspawner);
-    setTileType(tileCountX-2, tileCountY-2, TileType::enymyspawner);
+    //setTileType(0,0, TileType::enymyspawner);
+    //setTileType(0, tileCountY-1, TileType::enymyspawner);
+    //setTileType(tileCountX-2, 1, TileType::enymyspawner);
+    //setTileType(tileCountX-2, tileCountY-2, TileType::enymyspawner);
     setTileType(2, tileCountY/2, TileType::enymyspawner);
     calculateFlowField();
 }

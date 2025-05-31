@@ -2,11 +2,13 @@
 #include "level.h"
 #include "unit.h"
 #include "timer.h"
+#include "tower.h"
+#include "projectile.h"
+
 #include <raylib.h>
 #include <raymath.h>
 #include <bits/stdc++.h>
 #include <vector>
-#include "tower.h"
 #include <memory>
 
 using namespace std;
@@ -30,6 +32,7 @@ class Game {
     void addUnit(Vector2 mousePostion);
     //void removeUnit(Vector2 mousePosition);
     void updateUnit(float deltaTime);
+    void updateProjectiles(float deltaTime);
     
     void addTower(Vector2 mousePosition);
     void removeTower(Vector2 mousePosition);
@@ -44,6 +47,7 @@ class Game {
     const int tileSize= 48;
     Level level;
     
+    vector<Projectile> projectiles; // projectiles fired by towers
     vector<shared_ptr<Unit>> units;
     vector<Tower> towers;
 

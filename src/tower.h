@@ -6,6 +6,8 @@
 #include <bits/stdc++.h>
 #include <memory>
 #include "unit.h"
+#include "projectile.h"
+#include "timer.h"
 
 using namespace std;
 
@@ -27,12 +29,17 @@ class Tower {
     weak_ptr<Unit> findEnemy(vector<shared_ptr<Unit>>& units);
 
     weak_ptr<Unit> targetEnemy;
-    
+
+    bool updateAngle(float deltaTime);
+    void shoot(vector<Projectile>& projectiles);
+
+    Timer weaponTimer; // Timer for weapon cooldown
 
 
     public:
         Tower(Vector2 setPosition);
-        void update(float deltaTime, vector<shared_ptr<Unit>>& units);
+        void update(float deltaTime, vector<shared_ptr<Unit>>& units, 
+            vector<Projectile>& projectiles);
         void draw(int tileSize);
         
         bool checkIfOnTile(int x, int y);

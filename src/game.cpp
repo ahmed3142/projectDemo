@@ -2,6 +2,7 @@
 #include "textureloader.h"
 #include "tower.h"
 #include "level.h"
+#include "projectile.h"
 
 
 
@@ -11,7 +12,7 @@
 Game::Game(int windowWidth, int windowHeight)
     : PlacementModeCurrent(PlacementMode::wall), 
         level(windowWidth/tileSize, windowHeight/tileSize) ,
-        spawnTimer(1.0f), roundTimer(5.0f)
+        spawnTimer(2.0f), roundTimer(5.0f)
 {
     textureOverlay= *TextureLoader::LoadTextureFromFile("Overlay.png"); //menu
     
@@ -131,6 +132,10 @@ void Game::draw(){
         tower.draw(tileSize);
     }
 
+    for(auto &projectile : projectiles){ //projectiles
+        projectile.draw(tileSize);
+    }
+
     if(overlayVisible) DrawTexture(textureOverlay,40,40,WHITE);
 
     EndDrawing();
@@ -157,17 +162,6 @@ void Game::updateRoundSpawn(float deltaTime){
         spawnUnitCount--;
         spawnTimer.resetToMax();
     }
-}
-
-void Game::update(float deltaTime){
-    
-    updateUnit(deltaTime); //update all units
-
-    for(auto &tower : towers){ //tower update
-        tower.update(deltaTime, units);
-    }
-
-    updateRoundSpawn(deltaTime);
 }
 
 void Game::addTower(Vector2 mousePosition)
@@ -201,4 +195,27 @@ void Game::updateUnit(float deltaTime) {
         }
         ++it; // Move to the next unit
     }
+}
+
+void Game::updateProjectiles(float deltaTime) {
+    auto it =projectiles.begin();
+    while(it != projectiles.end()){
+        (*it).update(deltaTime);
+        if((*it).checkCollision()){
+            it = projectiles.erase(it); // Remove projectile if it collided
+        }
+        else it++; 
+    }
+}
+
+void Game::update(float deltaTime){
+    
+    updateUnit(deltaTime); //update all units
+
+    for(auto &tower : towers){ //tower update
+        tower.update(deltaTime, units, projectiles);
+    }
+
+    updateProjectiles(deltaTime); //update all projectiles
+    updateRoundSpawn(deltaTime); 
 }

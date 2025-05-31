@@ -1,22 +1,16 @@
 #include "tower.h"
 #include <raymath.h>
 #include <algorithm>
+#include "projectile.h"
 
 using namespace std;
 
-static inline float Vector2AngleBetween(Vector2 v1, Vector2 v2) {
-    // 2D cross product “scalar”
-    float cross = v1.x*v2.y - v1.y*v2.x;
-    // 2D dot product
-    float dot   = v1.x*v2.x + v1.y*v2.y;
-    return atan2f(cross, dot);
-}
-
 const float Tower::angularSpeed = 180.0f * DEG2RAD * 5.0f; 
-const float Tower::attackRange = 5.0f; // attack range in tiles
+const float Tower::attackRange = 3.0f; // attack range in tiles
 
 Tower::Tower(Vector2 setPosition) :
-    position(setPosition), angle(0.0f) //angle in radians
+    position(setPosition), angle(0.0f), //angle in radians
+    weaponTimer(5.0f) //  seconds cooldown for shooting
 {
     textureTileTower = *TextureLoader::LoadTextureFromFile("Tile Tower.png");
 }
@@ -24,38 +18,25 @@ Tower::Tower(Vector2 setPosition) :
 #include <cmath>
 #include <algorithm>   // for std::clamp
 
-void Tower::update(float deltaTime, std::vector<std::shared_ptr<Unit>>& units)
+void Tower::update(float deltaTime, vector<shared_ptr<Unit>>& units, vector<Projectile>& projectiles)
 {
+    weaponTimer.countDown(deltaTime); // update weapon timer
+    
     // pick a target if we don’t have one
-    if (targetEnemy.expired())
-        targetEnemy = findEnemy(units);
+    if(auto e = targetEnemy.lock()){
+        if(e-> getIsAlive() == false || Vector2Distance(position, e->getPosition()) > attackRange){
+            targetEnemy.reset(); // clear target if it’s dead or out of range 
+            // weak_ptr  
+        }
+    }
 
-    if (auto e = targetEnemy.lock())
+    if(targetEnemy.expired())
     {
-        // 1) get the unit-to-tower vector, normalize it
-        Vector2 delta = Vector2Subtract(e->getPosition(), position);
-        Vector2 dir   = Vector2Normalize(delta);
+        targetEnemy = findEnemy(units); // find a new target
+    }
 
-        // 2) absolute “desired” angle in world coords
-        float desired = std::atan2f(dir.y, dir.x);
-
-        // 3) find the shortest signed difference
-        float diff = desired - angle;
-        if (diff >  PI) diff -= 2*PI;
-        if (diff < -PI) diff += 2*PI;
-
-        // 4) clamp how much we can turn this frame
-        float maxTurn = angularSpeed * deltaTime;
-        if(diff > maxTurn) diff = maxTurn;
-        else if(diff < -maxTurn) diff = -maxTurn;
-
-
-        // 5) apply it
-        angle += diff;
-
-        // (optional) keep angle in –π..π or 0..2π so it never drifts wildly
-        if (angle >  PI) angle -= 2*PI;
-        if (angle < -PI) angle += 2*PI;
+    if(updateAngle(deltaTime)){
+        shoot(projectiles);
     }
 }
 
@@ -72,7 +53,7 @@ void Tower::draw(int tileSize)
         (float)tileSize,
         (float)tileSize
     };
-    float drawAngle = (angle * RAD2DEG) + 92; // angle in radians
+    float drawAngle = (angle * RAD2DEG) + 90; // angle in radians
 
     Rectangle sourceRect = { 0.0f, 0.0f, (float)textureTileTower.width, (float)textureTileTower.height };
     DrawTexturePro(textureTileTower, sourceRect, destRect, origin, drawAngle, WHITE);
@@ -99,4 +80,51 @@ weak_ptr<Unit> Tower::findEnemy(vector<shared_ptr<Unit>>& units)
     }
 
     return closestEnemy;
+}
+
+bool Tower::updateAngle(float deltaTime) {
+    if (auto e = targetEnemy.lock())
+    {
+        // 1) get the unit-to-tower vector, normalize it
+        Vector2 x=e->getPosition();
+        x.x-=0.5f;
+        x.y-=0.5f; // center the unit on its tile
+
+        Vector2 delta = Vector2Subtract(x, position);
+        Vector2 dir   = Vector2Normalize(delta);
+
+        // 2) absolute “desired” angle in world coords
+        float desired = std::atan2f(dir.y, dir.x);
+
+        // 3) find the shortest signed difference
+        float diff = desired - angle;
+        if (diff >  PI) diff -= 2*PI;
+        if (diff < -PI) diff += 2*PI;
+
+        // 4) clamp how much we can turn this frame
+        float maxTurn = angularSpeed * deltaTime;
+        if (fabsf(maxTurn) >= fabsf(diff)) {
+        angle = desired;
+        return true;      // We’re now pointing exactly at the target
+    }
+
+
+        // 5) apply it
+        if(diff > 0) {
+            angle += maxTurn; // turn clockwise
+        } else {
+            angle -= maxTurn; // turn counter-clockwise
+        }
+
+        // keep angle in –π..π or 0..2π so it never drifts wildly
+        if (angle >  PI) angle -= 2*PI;
+        if (angle < -PI) angle += 2*PI;
+    }
+    return false;
+}
+
+void Tower::shoot(vector<Projectile> &projectiles){
+    if(weaponTimer.timeSIsZero()){
+        projectiles.push_back(Projectile(position, Vector2{cosf(angle), sinf(angle)}));
+    }
 }
