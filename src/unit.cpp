@@ -6,7 +6,7 @@
 #include <memory>
 #include <cmath>
 
-const float Unit::speed = 2.0f;
+const float Unit::speed = 1.0f;
 const float Unit::size = 0.4f;
 
 Unit::Unit(Vector2 setPosition) : position(setPosition)
@@ -112,4 +112,19 @@ bool Unit::getIsAlive()
 Vector2 Unit::getPosition()
 {
     return position;
+}
+
+int Unit::getCurrentHealth	()
+{
+    return currentHealth;
+}
+
+void Unit::damage(int damageAmount){
+    if(damageAmount>0){
+        currentHealth -= damageAmount;
+        if(currentHealth < 0){
+            currentHealth=0;
+            alive = false;
+        }
+    }
 }

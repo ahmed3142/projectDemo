@@ -308,3 +308,21 @@ Vector2 Level::getRandomEnemySpawnerPosition() {
     }
     return Vector2{0.5f, 0.5f}; // No spawner found
 }
+
+void Level::printLevelInfo() {
+    cout << "Level Info:" << endl;
+    cout << "Tile Count X: " << tileCountX << endl;
+    cout << "Tile Count Y: " << tileCountY << endl;
+    cout << "Target Tile Position: (" << targetTileX << ", " << targetTileY << ")" << endl;
+
+    for (int y = 0; y < tileCountY; ++y) {
+        for (int x = 0; x < tileCountX; ++x) {
+            auto type = getTileType(x, y);
+            cout << "(" << x << ", " << y << "): ";
+            if (type == TileType::empty) cout << "Empty";
+            else if (type == TileType::wall) cout << "Wall";
+            else if (type == TileType::enymyspawner) cout << "Enemy Spawner";
+            cout << endl;
+        }
+    }
+}

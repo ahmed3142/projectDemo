@@ -75,12 +75,7 @@ void Game::processEvents(bool &running){ //for every frame
         overlayVisible = !overlayVisible;
     }
     if (IsKeyPressed(KEY_SPACE)) {
-        if (!roundStarted) {
-            roundStarted = true;
-            // cout << "Round started!" << endl;
-            roundTimer.resetToMax(); // Reset round time 
-            spawnUnitCount = 100;  // Initial spawn count
-        }
+        newRound(); // Start a new round when SPACE is pressed
     }
 
     Vector2 mouse= GetMousePosition();
@@ -138,6 +133,12 @@ void Game::draw(){
 
     if(overlayVisible) DrawTexture(textureOverlay,40,40,WHITE);
 
+    if(roundCompleted){
+        int textposx = 1488 / 2 - 200;
+            int textposy = 912 / 2 - 100;
+            DrawText("Round completed! Press SPACE to start a new round.", textposx, textposy, 20, BLACK); 
+    }
+
     EndDrawing();
 }
 
@@ -149,11 +150,9 @@ void Game::updateRoundSpawn(float deltaTime){
 
     if(units.empty() && spawnUnitCount == 0){
         roundTimer.countDown(deltaTime);
-        if(roundTimer.timeSIsZero()){
-            roundTimer.resetToMax();
-            spawnUnitCount = 100;
-            roundTimer.resetToMax();
-            bool roundStarted = false; // Reset round state
+        roundCompleted = true;
+        if(roundTimer.timeSIsZero()){       
+            roundStarted = false; // Reset round state
         }
     }
 
@@ -183,6 +182,16 @@ void Game::removeTower(Vector2 mousePostion){
     }
 }
 
+void Game::newRound() {
+    // Reset round state
+    roundStarted = true;
+    spawnUnitCount = 10; // Reset spawn count
+    roundTimer.resetToMax(); // Reset round timer
+    roundCompleted = false; // Reset round completed state
+    //cout << "New round started!" << endl;
+    level.printLevelInfo(); // Print level info for debugging  
+}
+
 void Game::updateUnit(float deltaTime) {
     auto it = units.begin();
     while(it != units.end()) {
@@ -200,7 +209,7 @@ void Game::updateUnit(float deltaTime) {
 void Game::updateProjectiles(float deltaTime) {
     auto it =projectiles.begin();
     while(it != projectiles.end()){
-        (*it).update(deltaTime);
+        (*it).update(deltaTime,units);
         if((*it).checkCollision()){
             it = projectiles.erase(it); // Remove projectile if it collided
         }

@@ -1,6 +1,6 @@
 #include "projectile.h"
 
-const float Projectile::speed = 10.0f;
+const float Projectile::speed = 20.0f;
 const float Projectile::size = 0.2f;
 const float Projectile::maxDistance = 5.0f;
 
@@ -10,13 +10,15 @@ Projectile::Projectile(Vector2 setPosition, Vector2 setDirection)
     bulletTex= *TextureLoader::LoadTextureFromFile("Bullet2.png");
 }
 
-void Projectile::update(float deltaTime){
+void Projectile::update(float deltaTime, vector<shared_ptr<Unit>> units){
     float moveDistance = speed * deltaTime;
     position+= direction * moveDistance;
     distanceTraveled += moveDistance;
     if (distanceTraveled >= maxDistance) {
-        collided = true; // Mark as collided if max distance is reached
+        collided = true; // Marking as collided if max distance is reached
     }
+
+    checkCollisionWithEnemy(units);
 }
 
 void Projectile::draw(int tileSize) {
@@ -33,4 +35,18 @@ void Projectile::draw(int tileSize) {
 
 bool Projectile::checkCollision() {
     return collided;
+}
+
+void Projectile::checkCollisionWithEnemy(vector<shared_ptr<Unit>> units){
+    if(!collided){
+        for(int i=0; i<(int)units.size() && collided==false; i++){
+            auto &unit = units[i];
+            cout << unit->getCurrentHealth() << " " << i << endl; 
+            if(unit != nullptr && unit->checkOverlap(position, size)){
+                unit->damage(1);
+                
+                collided = true;
+            }
+        }
+    }
 }

@@ -39,8 +39,9 @@ private:
     TileType getTileType(int x, int y); 
     void setTileType(int x,int y,TileType type);
 
-    vector<Tile> tiles;
+    
     //vector<Tile> tiles48; 
+    vector<Tile> tiles; 
     const int tileCountX;
     const int tileCountY;
     const int targetTileX;
@@ -71,4 +72,6 @@ public:
     void setTileWall(int x, int y, bool isWall);
     Vector2 getTargetPosition();
     Vector2 getFlowNormal(int x, int y);
+    
+    void printLevelInfo();
 };

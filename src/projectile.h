@@ -21,9 +21,10 @@ class Projectile {
     static const float size; // Size of the projectile
     static const float maxDistance; // Maximum distance the projectile can travel
 
+    void checkCollisionWithEnemy(vector<shared_ptr<Unit>> units);
     public:
         Projectile(Vector2 setPosition, Vector2 setDirection);
-        void update(float deltaTime);
+        void update(float deltaTime,vector<shared_ptr<Unit>> units);
         void draw(int tileSize);
         bool checkCollision();
 };

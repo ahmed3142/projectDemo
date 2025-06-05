@@ -2,6 +2,8 @@
 #include <raymath.h>
 #include <algorithm>
 #include "projectile.h"
+#include <cmath>
+#include <algorithm>   // for std::clamp
 
 using namespace std;
 
@@ -10,13 +12,10 @@ const float Tower::attackRange = 3.0f; // attack range in tiles
 
 Tower::Tower(Vector2 setPosition) :
     position(setPosition), angle(0.0f), //angle in radians
-    weaponTimer(5.0f) //  seconds cooldown for shooting
+    weaponTimer(1.0f) //  seconds cooldown for shooting
 {
     textureTileTower = *TextureLoader::LoadTextureFromFile("Tile Tower.png");
 }
-
-#include <cmath>
-#include <algorithm>   // for std::clamp
 
 void Tower::update(float deltaTime, vector<shared_ptr<Unit>>& units, vector<Projectile>& projectiles)
 {
@@ -125,6 +124,8 @@ bool Tower::updateAngle(float deltaTime) {
 
 void Tower::shoot(vector<Projectile> &projectiles){
     if(weaponTimer.timeSIsZero()){
-        projectiles.push_back(Projectile(position, Vector2{cosf(angle), sinf(angle)}));
+        Vector2 towerCenter = { position.x , position.y}; // center of the tower tile
+        projectiles.push_back(Projectile(towerCenter, Vector2{cosf(angle), sinf(angle)}));
+        weaponTimer.resetToMax(); // reset the timer after shooting
     }
 }

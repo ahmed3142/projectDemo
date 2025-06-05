@@ -29,6 +29,8 @@ class Game {
 
     void draw();
 
+    void newRound(); // start a new round
+
     void addUnit(Vector2 mousePostion);
     //void removeUnit(Vector2 mousePosition);
     void updateUnit(float deltaTime);
@@ -54,7 +56,7 @@ class Game {
     Texture2D textureOverlay;
     bool overlayVisible=true;
     
-
+    bool roundCompleted = false;
 
     public:
         Game(int windowWidth, int windowHeight);
