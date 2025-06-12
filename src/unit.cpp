@@ -6,18 +6,37 @@
 #include <memory>
 #include <cmath>
 
-const float Unit::speed = 1.0f;
-const float Unit::size = 0.4f;
+// const float Unit::speed = 1.0f;
+// const float Unit::size = 0.4f;
 
-Unit::Unit(Vector2 setPosition) : position(setPosition)
+Unit::Unit(Vector2 setPosition, EnemyType enemyType) : 
+    position(setPosition),
+    type(enemyType)
 {
-    Texture2D *unitTex = TextureLoader::LoadTextureFromFile("Unit2.bmp");
-    if (!unitTex)
-    {
-        std::cerr << "Failed to load one or more textures." << std::endl;
-        exit(1); // or handle error gracefully
+    switch (type) {
+        case EnemyType::basic:
+            texture = *TextureLoader::LoadTextureFromFile("Unit2.png");
+            speed = 1.0f;
+            size = 0.4f;
+            maxHealth = 3;
+            break;
+
+        case EnemyType::fast:
+            texture = *TextureLoader::LoadTextureFromFile("Unit2.png");
+            speed = 2.0f;
+            size = 0.3f;
+            maxHealth = 1;
+            break;
+
+        case EnemyType::tank:
+            texture = *TextureLoader::LoadTextureFromFile("Unit2.png");
+            speed = 0.5f;
+            size = 0.6f;
+            maxHealth = 10;
+            break;
     }
-    texture = *unitTex;
+
+    currentHealth = maxHealth;
 }
 
 void Unit::draw(int tileSize)
@@ -39,7 +58,7 @@ void Unit::update(float deltaTime, Level &level, vector<shared_ptr<Unit>> &units
     Vector2 oldPosition = position;
 
     float targetDistance = Vector2Distance(level.getTargetPosition(), position);
-    float moveDistance = speed * deltaTime;
+    float moveDistance = (this->speed) * deltaTime;
     // cout << "Unit at position: (" << position.x << ", " << position.y << ") with target distance: " << targetDistance << endl;
 
     if(targetDistance < 1.5f)
@@ -63,7 +82,7 @@ void Unit::update(float deltaTime, Level &level, vector<shared_ptr<Unit>> &units
     for (int count = 0; count < units.size() && ok; count++)
     {
         auto &unitSelected = units[count];
-        if(unitSelected != nullptr && unitSelected->checkOverlap(position, size) && unitSelected.get() != this)
+        if(unitSelected != nullptr && unitSelected->checkOverlap(position, this->size) && unitSelected.get() != this)
         {
             // They overlap so check and see if this unit is moving towards or away from the unit it overlaps.
             Vector2 directionToOther = Vector2Subtract(unitSelected->position, position);
@@ -121,8 +140,6 @@ int Unit::getCurrentHealth	()
 
 void Unit::damage(int damageAmount){
     if(damageAmount>0){
-        cout << "enemy hit" << endl;
-        
         currentHealth -= damageAmount;
         cout << "cuurent health: " << currentHealth << endl; 
         if(currentHealth <= 0){

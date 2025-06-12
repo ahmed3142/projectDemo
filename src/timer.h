@@ -11,6 +11,7 @@ public:
 	void countDown(float dT);
 	void resetToZero();
 	void resetToMax();
+	void setTo(float timeS);
 	bool timeSIsZero();
 	bool timeSIsGreaterThanOrEqualTo(float timeSCheck);
 };

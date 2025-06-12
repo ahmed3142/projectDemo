@@ -107,7 +107,7 @@ void Level::draw(int tileSize)
             {
                 // cout << "Tile at (" << x << ", " << y << ") is a wall." << endl;
                 DrawTexture(textureTileWall,
-                            x * tileSize, y * tileSize, WHITE);
+                            x * tileSize, y * tileSize, Fade(WHITE, 1.0f)); // top left *48
             }
         }
     }

@@ -8,20 +8,33 @@
 
 using namespace std;
 
+enum class EnemyType{
+    basic,
+    fast,
+    tank 
+};
+
 class Unit {
     Vector2 position;
     Vector2 velocity; 
-    static const float speed;
-    static const float size;
+    // static const float speed;
+    // static const float size;
 
     Texture2D texture;
     bool alive = true;
 
     const int healthBasic=2;
-    int currentHealth = healthBasic;  
+    int currentHealth = healthBasic; 
+    
+    EnemyType type;
+    float speed;
+    float size;
+    int maxHealth;
+
+
 
 public: 
-    Unit(Vector2 setPosition);
+    Unit(Vector2 setPosition, EnemyType enemyType = EnemyType::basic);
     void update(float deltaTime, Level& level, vector<shared_ptr<Unit>>& units);
     void draw(int tileSize);
     bool checkOverlap(Vector2 positionOfOtherUnit, float otherUnitSize);

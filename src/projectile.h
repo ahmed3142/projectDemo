@@ -17,14 +17,19 @@ class Projectile {
 
     bool collided = false;
 
+    float speed;
+    float maxDistance;
+    int damage;
+
      // Speed of the projectile
     static const float size; // Size of the projectile
-    static const float maxDistance; // Maximum distance the projectile can travel
+    // static const float maxDistance; // Maximum distance the projectile can travel
 
     void checkCollisionWithEnemy(vector<shared_ptr<Unit>> units);
     public:
-        static const float speed;
-        Projectile(Vector2 setPosition, Vector2 setDirection);
+        // static const float speed;
+        Projectile(Vector2 setPosition, Vector2 setDirection, 
+            float speed, float maxDistance, int damage);
         void update(float deltaTime,vector<shared_ptr<Unit>> units);
         void draw(int tileSize);
         bool checkCollision();

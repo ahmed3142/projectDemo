@@ -47,19 +47,19 @@ void Game::processEvents(bool &running){ //for every frame
     if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
         mouseDownThisFrame=true;
         mouseDownStatus= 1;
-        cout << mouseDownStatus << endl;
-        cout << "Mouse left button pressed" << endl;
+        //cout << mouseDownStatus << endl;
+        //cout << "Mouse left button pressed" << endl;
     }
     else if(IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)){
         mouseDownThisFrame=true;
         mouseDownStatus= 2;
-        cout << mouseDownStatus << endl;
-        cout << "Mouse right button pressed" << endl;
+        //cout << mouseDownStatus << endl;
+        //cout << "Mouse right button pressed" << endl;
     }
 
     if(IsMouseButtonReleased(MOUSE_LEFT_BUTTON) || IsMouseButtonReleased(MOUSE_RIGHT_BUTTON)){
         mouseDownStatus=0;
-        cout << "Mouse button released" << endl;
+        //cout << "Mouse button released" << endl;
     }
     if(IsKeyPressed(KEY_ESCAPE)) running=false;
     if(IsKeyPressed(KEY_ONE)){
@@ -82,7 +82,7 @@ void Game::processEvents(bool &running){ //for every frame
     Vector2 mousePosition= {mouse.x/tileSize, mouse.y/tileSize};
 
     if(mouseDownStatus>0){
-        if(mouseDownStatus==1){
+        if(mouseDownStatus==1){ // left mouse button
             if(PlacementModeCurrent== PlacementMode::wall){
                 level.setTileWall((int) mousePosition.x, (int) mousePosition.y, true); 
             }
@@ -90,18 +90,33 @@ void Game::processEvents(bool &running){ //for every frame
                 if(mouseDownThisFrame) addTower(mousePosition);
             }
         }
-        else if(mouseDownStatus==2){
-            //if(!roundStarted)
-                 level.setTileWall((int) mousePosition.x, (int) mousePosition.y,false);
-            removeTower(mousePosition);
-            //removeUnit(mousePosition);
+        else if(mouseDownStatus==2){ // right mouse button
+            if(IsKeyDown(KEY_R)) removeTower(mousePosition);
+            else if(IsKeyPressed(KEY_U)) upgradeTower(mousePosition);
+        }
+    }
+
+// tower range display
+hoveredTower = nullptr; // Reset hovered tower
+    for(auto &tower : towers) {
+        if (tower->checkIfOnTile((int)mousePosition.x, (int)mousePosition.y)) {
+            hoveredTower = tower; // Set hovered tower if mouse is over a tower
+            break;
         }
     }
 }
 
-void Game::addUnit(Vector2 mousePosition){
-    units.push_back(make_shared<Unit>(mousePosition));
+void Game::addUnit(Vector2 spawnPos){
+    EnemyType type = EnemyType::basic;
+
+    if (spawnUnitCount % 3 == 0)
+        type = EnemyType::tank;
+    else if (spawnUnitCount % 2 == 0)
+        type = EnemyType::fast;
+
+    units.push_back(make_shared<Unit>(spawnPos, type));
 }
+
 
 // void Game::removeUnit(Vector2 mousePosition){
 //     rep(i,units.size()){
@@ -124,7 +139,7 @@ void Game::draw(){
     }
 
     for(auto &tower : towers){ //towers
-        tower.draw(tileSize);
+        tower->draw(tileSize);
     }
 
     for(auto &projectile : projectiles){ //projectiles
@@ -139,6 +154,15 @@ void Game::draw(){
             DrawText("Round completed! Press SPACE to start a new round.", textposx, textposy, 20, BLACK); 
     }
 
+    // tower range display
+    if (hoveredTower != nullptr) {
+    Vector2 center = {
+        (hoveredTower->getPosition().x + 0.5f) * tileSize,
+        (hoveredTower->getPosition().y + 0.5f) * tileSize
+    };
+    float pixelRadius = hoveredTower->getRange() * tileSize;
+    DrawCircle((int)center.x, (int)center.y, pixelRadius, Fade(BLUE, 0.2f));
+  }
     EndDrawing();
 }
 
@@ -167,17 +191,43 @@ void Game::addTower(Vector2 mousePosition)
 {
     Vector2 position = {(int)mousePosition.x, (int)mousePosition.y};
     if(level.isTileWall((int)position.x, (int)position.y)){
-        towers.push_back(Tower(position));
+        for(auto &tower : towers) {
+            if (tower->checkIfOnTile((int)position.x, (int)position.y)) {
+                //cout << "Tower already exists at position: (" << position.x << ", " << position.y << ")" << endl;
+                return;
+            }
+        }
+        TowerType type = IsKeyDown(KEY_S) ? TowerType::sniper : TowerType::basic;
+        towers.push_back(make_shared<Tower>(position, type));
+        
+        
+        // checking  
+        if(type == TowerType::sniper) {
+            cout << "Sniper tower added at position: (" << position.x << ", " << position.y << ")" << endl;
+        } else {
+            cout << "Basic tower added at position: (" << position.x << ", " << position.y << ")" << endl;
+        }
     }
 }
 
 void Game::removeTower(Vector2 mousePostion){
-    for(auto it= towers.begin(); it != towers.end();){
-        if((*it).checkIfOnTile((int)mousePostion.x, (int)mousePostion.y)){
+        level.setTileWall((int) mousePostion.x, (int) mousePostion.y,false);
+        for(auto it= towers.begin(); it != towers.end();){
+        if((*it)->checkIfOnTile((int)mousePostion.x, (int)mousePostion.y)){
             it = towers.erase(it); 
             cout << "Tower removed at position: (" << mousePostion.x << ", " << mousePostion.y << ")" << endl;
         } else {
             ++it;
+            }
+        }
+}
+
+void Game::upgradeTower(Vector2 mousePosition){
+    for (auto &tower : towers) {
+        if (tower->checkIfOnTile((int)mousePosition.x, (int)mousePosition.y)) {
+            tower->upgrade();
+            cout << "Tower upgraded!" << endl;
+            break;
         }
     }
 }
@@ -222,7 +272,7 @@ void Game::update(float deltaTime){
     updateUnit(deltaTime); //update all units
 
     for(auto &tower : towers){ //tower update
-        tower.update(deltaTime, units, projectiles);
+        tower->update(deltaTime, units, projectiles);
     }
 
     updateProjectiles(deltaTime); //update all projectiles

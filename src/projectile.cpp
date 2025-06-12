@@ -1,14 +1,14 @@
 #include "projectile.h"
 
-const float Projectile::speed = 3.0f;
 const float Projectile::size = 0.2f;
-const float Projectile::maxDistance = 5.0f;
 
-Projectile::Projectile(Vector2 setPosition, Vector2 setDirection)
-    : position(setPosition), direction(Vector2Normalize(setDirection))
+Projectile::Projectile(Vector2 setPosition, Vector2 setDirection, float spd, float maxDist, int dmg)
+    : position(setPosition), direction(Vector2Normalize(setDirection)),
+      speed(spd), maxDistance(maxDist), damage(dmg)
 {
-    bulletTex= *TextureLoader::LoadTextureFromFile("Bullet2.png");
+    bulletTex = *TextureLoader::LoadTextureFromFile("Bullet2.png");
 }
+
 
 void Projectile::update(float deltaTime, vector<shared_ptr<Unit>> units){
     float moveDistance = speed * deltaTime;
@@ -47,7 +47,7 @@ void Projectile::checkCollisionWithEnemy(vector<shared_ptr<Unit>> units){
             projectilePosition.x = position.x + 0.5f;
             projectilePosition.y = position.y + 0.5f;
             if(unit != nullptr && unit->getIsAlive() && unit->checkOverlap(projectilePosition, size)){
-                unit->damage(1);
+                unit->damage(damage);
                 collided = true;
             }
         }

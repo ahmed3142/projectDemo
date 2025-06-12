@@ -22,12 +22,13 @@ void Timer::resetToZero() {
 	timeSCurrent = 0.0f;
 }
 
+void Timer::setTo(float timeS){
+	timeSCurrent = timeS;
+}
 
 void Timer::resetToMax() {
 	timeSCurrent = timeSMax;
 }
-
-
 
 bool Timer::timeSIsZero() {
 	return (timeSCurrent <= 0.0f);

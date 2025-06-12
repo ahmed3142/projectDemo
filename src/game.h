@@ -38,6 +38,9 @@ class Game {
     
     void addTower(Vector2 mousePosition);
     void removeTower(Vector2 mousePosition);
+    void upgradeTower(Vector2 mousePosition);
+
+    shared_ptr<Tower>  hoveredTower =nullptr;
 
     Timer spawnTimer, // gap between spawning units
           roundTimer; // gap between rounds
@@ -51,7 +54,7 @@ class Game {
     
     vector<Projectile> projectiles; // projectiles fired by towers
     vector<shared_ptr<Unit>> units;
-    vector<Tower> towers;
+    vector<shared_ptr<Tower>> towers;
 
     Texture2D textureOverlay;
     bool overlayVisible=true;
