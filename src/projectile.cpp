@@ -1,6 +1,6 @@
 #include "projectile.h"
 
-const float Projectile::size = 0.5f;
+const float Projectile::size = 0.2f;
 
 Projectile::Projectile(Vector2 setPosition, Vector2 setDirection, float spd, float maxDist, int dmg)
     : position(setPosition), direction(Vector2Normalize(setDirection)),

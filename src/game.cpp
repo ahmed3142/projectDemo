@@ -7,7 +7,7 @@
 #define rep(i, n) for (int i = 0; i < (n); ++i)
 #define rrep(i, a, b) for (int i = (a); i < (b); ++i)
 
-Game::Game(int windowWidth, int windowHeight)
+Game::Game(int windowWidth, int windowHeight, const LevelData &data)
     : PlacementModeCurrent(PlacementMode::wall),
       level(windowWidth / tileSize, windowHeight / tileSize),
       spawnTimer(2.0f), roundTimer(5.0f)
@@ -17,8 +17,12 @@ Game::Game(int windowWidth, int windowHeight)
     const float deltaTime = 1.0f / 60.0f;
     float accumulator = 0.0f;
 
+    cout << windowWidth/tileSize << " " << windowHeight/tileSize << 11 << endl;
+
     bool running = true;
     SetTargetFPS(60);
+
+    level.loadFromData(data); // external level 
 
     while (running && !WindowShouldClose())
     {

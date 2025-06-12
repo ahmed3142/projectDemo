@@ -5,7 +5,7 @@
 
 Level::Level(int setTileCountX, int setTileCountY)
     : tileCountX(setTileCountX), tileCountY(setTileCountY),
-      targetTileX(setTileCountX/2), targetTileY(setTileCountY/2)
+    targetTileX(tileCountX/2), targetTileY(tileCountY/2)
 {
 
     // textureTileWall = *TextureLoader::LoadTextureFromFile("Tile Wall.bmp");
@@ -50,13 +50,14 @@ Level::Level(int setTileCountX, int setTileCountY)
     textureTileEnemySpawner = *spawnerTex;
 
     tiles.assign(tileCountX * tileCountY, Tile());
+    cout << tileCountX << " " << tileCountY << endl;
 
     //enemy spawner tile
     //setTileType(0,0, TileType::enymyspawner);
     //setTileType(0, tileCountY-1, TileType::enymyspawner);
     //setTileType(tileCountX-2, 1, TileType::enymyspawner);
     //setTileType(tileCountX-2, tileCountY-2, TileType::enymyspawner);
-    setTileType(2, tileCountY/2, TileType::enymyspawner);
+    //setTileType(2, tileCountY/2, TileType::enymyspawner);
     calculateFlowField();
 }
 
@@ -77,41 +78,29 @@ Level::~Level()
 
 void Level::draw(int tileSize)
 {
-    rep(i, (int) tiles.size())
-    {
+    rep(i, (int) tiles.size()) {
         int x = i % tileCountX;
         int y = i / tileCountX;
-        drawTile(x, y, tileSize);
-    }
-    //draw spawners
-    rep(y, tileCountY)
-    {
-        rep(x, tileCountX)
-        {
-            if (getTileType(x, y) == TileType::enymyspawner)
-            {
-                DrawTexture(textureTileEnemySpawner,
-                            (x) * tileSize,(y) * tileSize, // top left *48
-                            WHITE);
-            }
-        }
-    }
-    DrawTexture(textureTileTarget,
-                (targetTileX-1) * tileSize, (targetTileY-1) * tileSize, WHITE); // top left *48
 
-    rep(y, tileCountY)
-    {
-        rep(x, tileCountX)
-        {
-            if (isTileWall(x, y))
-            {
-                // cout << "Tile at (" << x << ", " << y << ") is a wall." << endl;
-                DrawTexture(textureTileWall,
-                            x * tileSize, y * tileSize, Fade(WHITE, 1.0f)); // top left *48
-            }
+        TileType type = getTileType(x, y);
+        switch (type) {
+            case TileType::wall:
+                DrawTexture(textureTileWall, x * tileSize, y * tileSize, WHITE);
+                break;
+            case TileType::enymyspawner:
+                DrawTexture(textureTileEnemySpawner, x * tileSize, y * tileSize, WHITE);
+                break;
+            default:
+                DrawTexture(textureTileEmpty, x * tileSize, y * tileSize, WHITE);
+                break;
         }
     }
+
+    // Draw target tile on top
+    DrawTexture(textureTileTarget,
+                (targetTileX - 1) * tileSize, (targetTileY - 1) * tileSize, WHITE);
 }
+
 
 void Level::drawTile(int x, int y, int tileSize)  //top left * 48
 {
@@ -282,9 +271,9 @@ void Level::setTileType(int x,int y,TileType type){
             return;
         tiles[y * tileCountX + x].type = type;
         calculateFlowField();
-    }
+}
 
-Level::TileType Level::getTileType(int x, int y) {
+TileType Level::getTileType(int x, int y) {
     if (x < 0 || x >= tileCountX || y < 0 || y >= tileCountY || x + y * tileCountX < 0 || x + y * tileCountX >= tiles.size())
         return TileType::empty;
     return tiles[y * tileCountX + x].type;
@@ -325,4 +314,20 @@ void Level::printLevelInfo() {
             cout << endl;
         }
     }
+}
+
+
+void Level::loadFromData(const LevelData &data){
+    for(auto &pos : data.wallPositions){
+        setTileWall((int)pos.x, (int)pos.y, true);
+    }
+
+    for(auto &pos : data.spawnerPositions){
+        setTileType((int)pos.x, (int)pos.y, TileType::enymyspawner);
+    }
+
+    targetTileX = (int)data.targetTile.x;
+    targetTileY = (int)data.targetTile.y;
+
+    calculateFlowField();  
 }

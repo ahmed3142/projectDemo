@@ -7,18 +7,21 @@
 #include <vector>
 #include <memory>
 #include <bits/stdc++.h>
+
 #include "textureloader.h"
+#include "leveldata.h" 
+
 
 using namespace std;
+enum class TileType{
+        empty,
+        wall,
+        enymyspawner,
+};
 
 class Level
 {
 private:
-    enum class TileType{
-        empty,
-        wall,
-        enymyspawner
-    };
     static const unsigned char MAX_LEVELS = 255;
 
     struct Tile
@@ -37,15 +40,15 @@ private:
     void CalculateFlowFieldForTile(); // flow directions
 
     TileType getTileType(int x, int y); 
-    void setTileType(int x,int y,TileType type);
+    
 
     
     //vector<Tile> tiles48; 
     vector<Tile> tiles; 
     const int tileCountX;
     const int tileCountY;
-    const int targetTileX;
-    const int targetTileY;
+    int targetTileX;
+    int targetTileY;
 
     Texture2D textureTileWall;
     Texture2D textureTileTarget;
@@ -70,8 +73,10 @@ public:
     void drawTile(int x, int y, int tileSize);
     bool isTileWall(int x, int y);
     void setTileWall(int x, int y, bool isWall);
+    void setTileType(int x,int y,TileType type);
     Vector2 getTargetPosition();
     Vector2 getFlowNormal(int x, int y);
     
     void printLevelInfo();
+    void loadFromData(const LevelData &data);
 };

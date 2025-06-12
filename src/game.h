@@ -4,6 +4,7 @@
 #include "timer.h"
 #include "tower.h"
 #include "projectile.h"
+#include "leveldata.h"
 
 #include <raylib.h>
 #include <raymath.h>
@@ -65,6 +66,6 @@ class Game {
     bool roundCompleted = false;
 
     public:
-        Game(int windowWidth, int windowHeight);
+        Game(int windowWidth, int windowHeight, const LevelData &data);
         ~Game();
 };
