@@ -34,6 +34,8 @@ class Tower {
     float projectileMaxDistance;
     int projectileDamage;
 
+    int getDynamicThreshold() const;
+
     int towerLevel = 1;
     static const int maxTowerLevel = 3;
 

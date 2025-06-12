@@ -78,6 +78,11 @@ void Tower::draw(int tileSize)
     Rectangle sourceRect = { 0.0f, 0.0f, (float)textureTileTower.width, (float)textureTileTower.height };
     DrawTexturePro(textureTileTower, sourceRect, destRect, origin, drawAngle, WHITE);
     DrawText(TextFormat("Lv%d", towerLevel) , position.x * tileSize + 4, position.y * tileSize + 4, 10, BLACK);
+
+    if (auto t = targetEnemy.lock()) {
+    Vector2 pos = t->getPosition();
+    DrawCircleLines((int)((pos.x) * tileSize), (int)((pos.y) * tileSize), tileSize * 0.5f, RED);
+    }
 }
 
 
@@ -87,20 +92,32 @@ bool Tower::checkIfOnTile(int x,int y){
 
 weak_ptr<Unit> Tower::findEnemy(vector<shared_ptr<Unit>>& units)
 {
-    weak_ptr<Unit> closestEnemy;
-    float closestDistance = 0.0f;
+    weak_ptr<Unit> bestTarget;
+    float closestDistance = FLT_MAX;
+    float closestHighHealth = FLT_MAX;
 
-    for(auto &unit : units){
-        if(unit != nullptr){
-            float currentDistance = Vector2Distance(position, unit->getPosition());
-            if(currentDistance <= range && (closestEnemy.expired() || currentDistance < closestDistance)){
-                closestEnemy = unit;
-                closestDistance = currentDistance;
+    const int dynamicThreshold = getDynamicThreshold();
+
+    for (auto& unit : units) {
+        if (!unit || !unit->getIsAlive()) continue;
+
+        float dist = Vector2Distance(position, unit->getPosition());
+        if (dist > range) continue;
+
+        int health = unit->getCurrentHealth();
+
+        if (type == TowerType::sniper && health > dynamicThreshold) {
+            if (dist < closestHighHealth) {
+                bestTarget = unit;
+                closestHighHealth = dist;
             }
+        } else if (bestTarget.expired() && dist < closestDistance) {
+            bestTarget = unit;
+            closestDistance = dist;
         }
     }
 
-    return closestEnemy;
+    return bestTarget;
 }
 
 bool Tower::updateAngle(float deltaTime)
@@ -222,6 +239,18 @@ void Tower::upgrade() {
 Vector2 Tower::getPosition() const {
     return position;
 }
+
 float Tower::getRange() const {
     return range;
 }
+
+int Tower::getDynamicThreshold() const {
+    switch (type) {
+        case TowerType::basic:
+            return 0; // Basic tower has no dynamic threshold
+        case TowerType::sniper:
+            if(towerLevel > 1) return 3 + towerLevel;
+        default:
+            return 0; // Default case, should not happen
+    }
+} 
