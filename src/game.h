@@ -31,7 +31,7 @@ class Game {
 
     void newRound(); // start a new round
 
-    void addUnit(Vector2 mousePostion);
+    void addUnit(Vector2 mousePostion, EnemyType);
     //void removeUnit(Vector2 mousePosition);
     void updateUnit(float deltaTime);
     void updateProjectiles(float deltaTime);
@@ -46,6 +46,9 @@ class Game {
           roundTimer; // gap between rounds
     int spawnUnitCount=0,
         roundCount=0;
+
+    float enemySpawnCooldown = 2.0f;
+    EnemyType currentEnemyType = EnemyType::basic;
 
     int mouseDownStatus=0;
 

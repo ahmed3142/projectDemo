@@ -32,7 +32,6 @@ class Unit {
     int maxHealth;
 
 
-
 public: 
     Unit(Vector2 setPosition, EnemyType enemyType = EnemyType::basic);
     void update(float deltaTime, Level& level, vector<shared_ptr<Unit>>& units);
@@ -43,4 +42,6 @@ public:
     int getCurrentHealth();
     void damage(int damageAmount);
     Vector2 getVelocity() const;
+
+    
 };

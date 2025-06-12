@@ -185,13 +185,13 @@ void Tower::shoot(vector<Projectile> &projectiles){
         case TowerType::basic:
             projectiles.push_back(Projectile(towerCenter, direction, 
                 projectileSpeed, projectileMaxDistance, projectileDamage));
-            weaponTimer.resetToMax(); // reset the timer for the next shot
-            break;
+                weaponTimer.setTo(fireCooldown); // reset the timer for the next shot
+                break;
         case TowerType::sniper:
             projectiles.push_back(Projectile(towerCenter, direction, 
                 projectileSpeed, projectileMaxDistance, projectileDamage));
-            weaponTimer.setTo(2.0f); // reset the timer for the next shot
-            break;       
+                weaponTimer.setTo(fireCooldown); // reset the timer for the next shot
+                break;       
         }
 
     }
@@ -206,14 +206,14 @@ void Tower::upgrade() {
         case TowerType::basic:
             range += 0.5f;
             projectileDamage += 1;
-            fireCooldown = max(0.3f, fireCooldown - 0.1f);
+            fireCooldown = max(0.0f, fireCooldown - 0.3f);
             break;
 
         case TowerType::sniper:
             range += 3.0f;
             projectileDamage += 2;
             projectileMaxDistance += 3.0f;
-            fireCooldown = max(1.5f, fireCooldown - 0.2f);
+            fireCooldown = max(0.5f, fireCooldown - 0.5f);
             break;
     }
 
