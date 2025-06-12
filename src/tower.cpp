@@ -3,7 +3,7 @@
 #include <algorithm>
 #include "projectile.h"
 #include <cmath>
-#include <algorithm>   // for std::clamp
+#include <algorithm>   
 
 using namespace std;
 
@@ -21,17 +21,16 @@ void Tower::update(float deltaTime, vector<shared_ptr<Unit>>& units, vector<Proj
 {
     weaponTimer.countDown(deltaTime); // update weapon timer
     
-    // pick a target if we don’t have one
+    // picking target  
     if(auto e = targetEnemy.lock()){
         if(e-> getIsAlive() == false || Vector2Distance(position, e->getPosition()) > attackRange){
             targetEnemy.reset(); // clear target if it’s dead or out of range 
-            // weak_ptr  
         }
     }
 
     if(targetEnemy.expired())
     {
-        targetEnemy = findEnemy(units); // find a new target
+        targetEnemy = findEnemy(units); //finding new target
     }
 
     if(updateAngle(deltaTime)){
@@ -52,7 +51,7 @@ void Tower::draw(int tileSize)
         (float)tileSize,
         (float)tileSize
     };
-    float drawAngle = (angle * RAD2DEG) + 88; // angle in radians
+    float drawAngle = (angle * RAD2DEG) + 88; // angle in degrees 
 
     Rectangle sourceRect = { 0.0f, 0.0f, (float)textureTileTower.width, (float)textureTileTower.height };
     DrawTexturePro(textureTileTower, sourceRect, destRect, origin, drawAngle, WHITE);
@@ -85,7 +84,6 @@ bool Tower::updateAngle(float deltaTime)
 {
     if (auto e = targetEnemy.lock())
     {
-        // 1) tower pos:
         Vector2 T = position;
 
         // 2) enemy’s current center‐ed position:

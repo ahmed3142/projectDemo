@@ -42,7 +42,7 @@ void Projectile::checkCollisionWithEnemy(vector<shared_ptr<Unit>> units){
     if(!collided){
         for(int i=0; i<(int)units.size() && collided==false; i++){
             auto &unit = units[i];
-            cout << unit->getCurrentHealth() << " " << i << endl; 
+            // cout << unit->getCurrentHealth() << " " << i << endl; 
             Vector2 projectilePosition;
             projectilePosition.x = position.x + 0.5f;
             projectilePosition.y = position.y + 0.5f;

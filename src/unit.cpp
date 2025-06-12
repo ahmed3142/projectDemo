@@ -121,8 +121,11 @@ int Unit::getCurrentHealth	()
 
 void Unit::damage(int damageAmount){
     if(damageAmount>0){
+        cout << "enemy hit" << endl;
+        
         currentHealth -= damageAmount;
-        if(currentHealth < 0){
+        cout << "cuurent health: " << currentHealth << endl; 
+        if(currentHealth <= 0){
             currentHealth=0;
             alive = false;
         }
