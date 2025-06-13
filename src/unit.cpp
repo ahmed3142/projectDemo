@@ -153,3 +153,7 @@ Vector2 Unit::getVelocity() const
 {
     return velocity;
 }
+
+EnemyType Unit::getEnemyType() const {
+    return type;
+}

@@ -55,6 +55,8 @@ class Tower {
 
     Timer weaponTimer; // Timer for weapon cooldown
 
+    int totalSpent=0;
+
 
     public:
         Tower(Vector2 setPosition, TowerType setType);
@@ -62,8 +64,16 @@ class Tower {
         void update(float deltaTime, vector<shared_ptr<Unit>>& units, vector<Projectile>& projectiles);
         void upgrade();
         void draw(int tileSize);
+        
         Vector2 getPosition() const;
         float getRange() const;
         
+        TowerType getTowerType() const;
+        int getTowerLevel() const;
+        bool isMaxLevel() const;
+        
         bool checkIfOnTile(int x, int y);
+
+        int getTotalSpent() const;
+        void addSpentCost(int cost);
 };

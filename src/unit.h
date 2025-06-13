@@ -43,5 +43,5 @@ public:
     void damage(int damageAmount);
     Vector2 getVelocity() const;
 
-    
+    EnemyType getEnemyType() const;
 };

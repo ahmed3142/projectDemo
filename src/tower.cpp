@@ -30,7 +30,7 @@ Tower::Tower(Vector2 setPosition, TowerType setType) :
         textureTileTower = *TextureLoader::LoadTextureFromFile("Sniper Tower.png");
         range = 7.0f;
         fireCooldown = 2.5f;
-        projectileSpeed = 5.0f;
+        projectileSpeed = 20.0f;
         projectileMaxDistance = 10.0f;
         projectileDamage = 3;
         break;
@@ -254,3 +254,24 @@ int Tower::getDynamicThreshold() const {
             return 0; // Default case, should not happen
     }
 } 
+
+TowerType Tower::getTowerType() const {
+    return type;
+}
+
+int Tower::getTowerLevel() const {
+    return towerLevel;
+}
+
+int Tower::getTotalSpent() const {
+    return totalSpent;
+}
+
+void Tower::addSpentCost(int cost) {
+    totalSpent += cost;
+}
+
+bool Tower::isMaxLevel() const {
+    return towerLevel>=maxTowerLevel;
+}
+
