@@ -14,28 +14,31 @@ LevelEditor::LevelEditor(int screenWidth, int screenHeight)
       screenWidth(screenWidth),
       level(make_unique<Level>(31, 19))
 {
-    // cout << screenWidth/tileSize << " " << screenHeight/tileSize << "leveleditor" << endl;
 }
 
-void LevelEditor::run()
-{
-    bool running = true;
-    while (!WindowShouldClose() && running)
-    {
-        processInput(running);
-        draw();
-    }
-}
+// void LevelEditor::run()
+// {
+//     bool running = true;
+//     while (!WindowShouldClose() && running)
+//     {
+//         processInput(running);
+//         draw();
+//     }
+// }
 
 void LevelEditor::processInput(bool &running)
 {
-    if (IsKeyPressed(KEY_ESCAPE))
-    {
-        running = false; // Exit the editor
-    }
-
     Vector2 mouse = GetMousePosition();
     Vector2 gridPosition = {mouse.x / tileSize, mouse.y / tileSize};
+
+    // Back to menu button click
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mouse, backBtn))
+    {
+        //editorDone = true;
+        reset();
+        running = false;
+        return;
+    }
 
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
@@ -43,61 +46,91 @@ void LevelEditor::processInput(bool &running)
         {
             level->setTileWall((int)gridPosition.x, (int)gridPosition.y, true);
             levelData.wallPositions.push_back(gridPosition);
-            cout << "wall added at " << gridPosition.x << " " << gridPosition.y << endl;
+            cout << "Wall added at " << gridPosition.x << " " << gridPosition.y << endl;
         }
         else if (IsKeyDown(KEY_TWO))
         {
             level->setTileWall((int)gridPosition.x, (int)gridPosition.y, false);
             level->setTileType((int)gridPosition.x, (int)gridPosition.y, TileType::enymyspawner);
             levelData.spawnerPositions.push_back(gridPosition);
-            cout << "spawner added at " << gridPosition.x << " " << gridPosition.y << endl;
+            cout << "Spawner added at " << gridPosition.x << " " << gridPosition.y << endl;
         }
-        // else if (IsKeyDown(KEY_THREE)) {
-        //      level->setTileWall((int)gridPosition.x, (int)gridPosition.y, false);
-        //      levelData.targetTile = gridPosition;
-        //      level->setTileType((int)gridPosition.x, (int)gridPosition.y, TileType::targettile);
-        //      cout << "target added at " << gridPosition.x << " " << gridPosition.y << endl;
-        //  }
     }
-    if (IsKeyPressed(KEY_S)) {
-    vector<LevelData> allLevels;
-    ifstream infile("all_levels.json");
-    if (infile.good()) {
-        allLevels = loadAllLevelsFromFile("all_levels.json");
-    }
-    allLevels.push_back(levelData);
-    saveAllLevelsToFile(allLevels, "all_levels.json");
-    cout << "Appended new level to all_levels.json" << endl;
-}
 
-    // if (IsKeyPressed(KEY_C))
-    // {
-    //     levelData = LevelData(); // blank data
-    //     // int tilesX = screenWidth / tileSize;
-    //     // int tilesY = screenHeight / tileSize;
-
-    //     //level = make_unique<Level>(31, 19);
-    //     level->loadFromData(levelData);
-
-    //     std::cout << "Cleared level. Start fresh." << std::endl;
-    // }
-
-    if (IsKeyPressed(KEY_E))
+    if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON))
     {
-        saveAllLevelsToFile(allLevels, "all_levels.json");
-        std::cout << "All levels saved to all_levels.json" << std::endl;
+        int gx = (int)gridPosition.x;
+        int gy = (int)gridPosition.y;
+
+        
+        auto wallIt = find_if(levelData.wallPositions.begin(), levelData.wallPositions.end(),
+                                   [gx, gy](Vector2 pos)
+                                   {
+                                       return (int)pos.x == gx && (int)pos.y == gy;
+                                   });
+
+        if (wallIt != levelData.wallPositions.end())
+        {
+            levelData.wallPositions.erase(wallIt);
+            level->setTileWall(gx, gy, false);
+            //cout << "Wall removed at " << gx << " " << gy << endl;
+        }
+
+        
+        auto spawnerIt = find_if(levelData.spawnerPositions.begin(), levelData.spawnerPositions.end(),
+                                      [gx, gy](Vector2 pos)
+                                      {
+                                          return (int)pos.x == gx && (int)pos.y == gy;
+                                      });
+
+        if (spawnerIt != levelData.spawnerPositions.end())
+        {
+            levelData.spawnerPositions.erase(spawnerIt);
+            level->setTileType(gx, gy, TileType::empty); // Or however you represent non-spawner
+            //cout << "Spawner removed at " << gx << " " << gy << endl;
+        }
     }
+
+    if (IsKeyPressed(KEY_S))
+    {
+        vector<LevelData> allLevels;
+        ifstream infile("all_levels.json");
+        if (infile.good())
+        {
+            allLevels = loadAllLevelsFromFile("all_levels.json");
+        }
+        allLevels.push_back(levelData);
+        saveAllLevelsToFile(allLevels, "all_levels.json");
+        cout << "Appended new level to all_levels.json" << endl;
+    }
+
+    // if (IsKeyPressed(KEY_E))
+    // {
+    //     saveAllLevelsToFile(allLevels, "all_levels.json");
+    //     cout << "All levels saved to all_levels.json" << endl;
+    // }
 }
 
 void LevelEditor::draw()
 {
-    BeginDrawing();
-    ClearBackground(RAYWHITE);
+    cout << "entering level editor" << endl;
+
     level->draw(tileSize);
-    EndDrawing();
+
+    // Back button
+    DrawRectangleRec(backBtn, LIGHTGRAY);
+    DrawText("Back to Main Menu", backBtn.x + 10, backBtn.y + 15, 20, BLACK);
+
 }
 
 LevelData LevelEditor::getLevelData() const
 {
     return levelData;
 }
+
+void LevelEditor::reset()
+{
+    levelData = LevelData(); // Clear all stored tile positions
+    level = make_unique<Level>(31, 19); // Recreate empty level
+}
+

@@ -101,7 +101,6 @@ void Level::draw(int tileSize)
                 (targetTileX - 1) * tileSize, (targetTileY - 1) * tileSize, WHITE);
 }
 
-
 void Level::drawTile(int x, int y, int tileSize)  //top left * 48
 {
     DrawTexture(textureTileEmpty,
@@ -316,18 +315,76 @@ void Level::printLevelInfo() {
     }
 }
 
+// void Level::loadFromData(const LevelData &data) {
+//     // 1) Clear out previous level
+//     tiles.assign(tileCountX * tileCountY, Tile());  
+//     targetTileX = tileCountX/2;
+//     targetTileY = tileCountY/2;
 
-void Level::loadFromData(const LevelData &data){
-    for(auto &pos : data.wallPositions){
-        setTileWall((int)pos.x, (int)pos.y, true);
+//     // 2) Now paint in this level’s walls and spawners
+//     for (auto &pos : data.wallPositions)
+//         setTileWall((int)pos.x, (int)pos.y, true);
+//     for (auto &pos : data.spawnerPositions)
+//         setTileType((int)pos.x, (int)pos.y, TileType::enymyspawner);
+
+//     // 3) Place the target
+//     targetTileX = (int)data.targetTile.x;
+//     targetTileY = (int)data.targetTile.y;
+
+//     // 4) Recompute flow field
+//     calculateFlowField();
+// }
+
+void Level::loadFromData(const LevelData &data) {
+    // DEBUG: log what we’re about to paint
+    std::cout 
+      << "Loading level: " 
+      << " walls=" << data.wallPositions.size() 
+      << " spawners=" << data.spawnerPositions.size() 
+      << " target=(" << data.targetTile.x 
+                     << "," << data.targetTile.y << ")\n";
+
+    // 1) Clear out previous level
+    tiles.assign(tileCountX * tileCountY, Tile());
+    targetTileX = tileCountX/2;
+    targetTileY = tileCountY/2;
+
+    // 2) Paint walls—but only if they’re in range
+    for (auto &pos : data.wallPositions) {
+        int ix = int(pos.x), iy = int(pos.y);
+        if (ix < 0 || ix >= tileCountX ||
+            iy < 0 || iy >= tileCountY) {
+            std::cerr << "  [!] skipping invalid wall at (" 
+                      << ix << "," << iy << ")\n";
+            continue;
+        }
+        setTileWall(ix, iy, true);
     }
 
-    for(auto &pos : data.spawnerPositions){
-        setTileType((int)pos.x, (int)pos.y, TileType::enymyspawner);
+    // 3) Paint spawners with the same check
+    for (auto &pos : data.spawnerPositions) {
+        int ix = int(pos.x), iy = int(pos.y);
+        if (ix < 0 || ix >= tileCountX ||
+            iy < 0 || iy >= tileCountY) {
+            std::cerr << "  [!] skipping invalid spawner at (" 
+                      << ix << "," << iy << ")\n";
+            continue;
+        }
+        setTileType(ix, iy, TileType::enymyspawner);
     }
 
-    targetTileX = (int)data.targetTile.x;
-    targetTileY = (int)data.targetTile.y;
+    // 4) Place the target (again, you could check range here too)
+    targetTileX = int(data.targetTile.x);
+    targetTileY = int(data.targetTile.y);
 
-    calculateFlowField();  
+    // 5) Recompute flow field
+    calculateFlowField();
+}
+
+
+void Level::resetLevel() { // i think bugged 
+  tiles.assign(tileCountX * tileCountY, Tile());
+  targetTileX = tileCountX/2; 
+  targetTileY = tileCountY/2;
+  calculateFlowField();
 }

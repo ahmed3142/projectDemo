@@ -10,10 +10,10 @@ using namespace std;
 #define rrep(i, a, b) for (int i = (a); i < (b); ++i)
 
 Game::Game(int windowWidth, int windowHeight, const LevelData &data)
-    : PlacementModeCurrent(PlacementMode::wall),
+    : PlacementModeCurrent(PlacementMode::tower),
       level(windowWidth / tileSize, windowHeight / tileSize),
-      spawnTimer(2.0f), roundTimer(5.0f),
-      money(10000)
+      spawnTimer(2.0f), roundTimer(2.0f),
+      money(baseMoney)
 {
     textureOverlay = *TextureLoader::LoadTextureFromFile("Overlay.png"); // menu
 
@@ -64,6 +64,8 @@ void Game::processEvents(bool &running)
     {
         if (mouseClick && CheckCollisionPointRec(mouse, startBtn))
         {
+            selectLevelIndex = 1;
+            level.loadFromData(allLevels[selectLevelIndex]);
             currentState = GameUIState::Playing;
         }
         else if (mouseClick && CheckCollisionPointRec(mouse, levelSelectBtn))
@@ -78,6 +80,12 @@ void Game::processEvents(bool &running)
         {
             running = false;
         }
+        else if (mouseClick && CheckCollisionPointRec(mouse, levelEditorBtn))
+        {
+            currentState = GameUIState::LevelEditor;
+            levelEditor = make_unique<LevelEditor>(1488, 912);
+        }
+
         return; // skip other input
     }
 
@@ -88,6 +96,14 @@ void Game::processEvents(bool &running)
         return;
     }
 
+    // PLAYING or PAUSED BACK BUTTON
+    if ((currentState == GameUIState::Playing || currentState == GameUIState::Paused) && mouseClick && CheckCollisionPointRec(mouse, instantGameOverBtn))
+    {
+        gameOver = true;
+        currentState = GameUIState::GameOver;
+        return;
+    }
+
     if (currentState == GameUIState::LevelSelect)
     {
         for (int i = 0; i < (int)allLevels.size(); ++i)
@@ -95,7 +111,8 @@ void Game::processEvents(bool &running)
             Rectangle levelBtn = {600, 200 + i * 60, 300, 50};
             if (mouseClick && CheckCollisionPointRec(mouse, levelBtn))
             {
-                // selectedLevelIndex = i;
+                selectLevelIndex = i;
+                level.resetLevel();
                 level.loadFromData(allLevels[i]);
                 currentState = GameUIState::Playing;
                 return;
@@ -103,12 +120,49 @@ void Game::processEvents(bool &running)
         }
     }
 
-    // paused
+    // PAUSED
     if (currentState == GameUIState::Paused)
     {
         if ((mouseClick && CheckCollisionPointRec(mouse, resumeBtn)) || IsKeyPressed(KEY_P))
         {
             currentState = GameUIState::Playing;
+        }
+        return;
+    }
+
+    // GAMEOVER
+    if (currentState == GameUIState::GameOver)
+    {
+        if (mouseClick && CheckCollisionPointRec(mouse, gameOverMainMenuBtn))
+        {
+            currentState = GameUIState::MainMenu;
+            gameOver = false;
+            gameWon = false;
+            targetHealth = 100;
+            money = baseMoney;
+            units.clear();
+            towers.clear();
+        }
+        else if (mouseClick && CheckCollisionPointRec(mouse, gameOverLevelSelectBtn))
+        {
+            currentState = GameUIState::LevelSelect;
+            gameOver = false;
+            gameWon = false;
+            targetHealth = 100;
+            money = baseMoney;
+            units.clear();
+            towers.clear();
+        }
+        else if (mouseClick && CheckCollisionPointRec(mouse, gameOverRestartBtn))
+        {
+            currentState = GameUIState::Playing;
+            gameOver = false;
+            gameWon = false;
+            targetHealth = 100;
+            money = baseMoney;
+            units.clear();
+            towers.clear();
+            level.loadFromData(allLevels[selectLevelIndex]); // restart level
         }
         return;
     }
@@ -142,10 +196,15 @@ void Game::processEvents(bool &running)
         mouseDownStatus = 0;
         // cout << "Mouse button released" << endl;
     }
+
     if (IsKeyPressed(KEY_ESCAPE))
         running = false;
+
     if (IsKeyPressed(KEY_ONE))
     {
+        if (currentState != GameUIState::LevelEditor)
+            return;
+
         cout << "Placement mode: wall" << endl;
         PlacementModeCurrent = PlacementMode::wall;
     }
@@ -169,9 +228,9 @@ void Game::processEvents(bool &running)
             sellConfirmTimer.resetToMax();
         }
     }
-    if (IsKeyPressed(KEY_SPACE))
+    if (IsKeyPressed(KEY_SPACE) && currentState == GameUIState::Playing && !roundStarted && !gameOver && roundCount < maxRounds)
     {
-        newRound(); // Start a new round when SPACE is pressed
+        newRound();
     }
 
     Vector2 mousePosition = {mouse.x / tileSize, mouse.y / tileSize};
@@ -240,77 +299,98 @@ void Game::addUnit(Vector2 spawnPos, EnemyType type)
 
 void Game::draw()
 {
+    // frame
     BeginDrawing();
     ClearBackground(RAYWHITE);
 
-    // Gameplay
     if (currentState == GameUIState::Playing || currentState == GameUIState::Paused)
     {
+        // draw the map
         level.draw(tileSize);
 
+        // draw all units
         for (auto &unit : units)
         {
             if (unit)
                 unit->draw(tileSize);
         }
 
+        // draw all towers
         for (auto &tower : towers)
         {
             tower->draw(tileSize);
         }
 
+        // draw all projectiles
         for (auto &projectile : projectiles)
         {
             projectile.draw(tileSize);
         }
 
-        // Overlay (press M)
+        // optional overlay (e.g. “press M”)
         if (overlayVisible)
-        {
             DrawTexture(textureOverlay, 40, 40, WHITE);
-        }
 
-        // Round completion message
-        if (roundCompleted)
+        // round-completed message
+        if (roundCompleted && units.size() == 0)
         {
             int textX = 1488 / 2 - 200;
             int textY = 912 / 2 - 100;
-            DrawText("Round completed! Press SPACE to start a new round.", textX, textY, 20, BLACK);
+            DrawText(
+                "Round completed! Press SPACE to start a new round.",
+                textX, textY, 20, BLACK);
         }
 
-        // Hovered tower range display
+        // hovered-tower range circle
         if (hoveredTower != nullptr)
         {
             Vector2 center = {
                 (hoveredTower->getPosition().x + 0.5f) * tileSize,
                 (hoveredTower->getPosition().y + 0.5f) * tileSize};
-            float pixelRadius = hoveredTower->getRange() * tileSize;
-
-            DrawCircle((int)center.x, (int)center.y, pixelRadius, Fade(BLUE, 0.1f));
-            DrawCircleLines((int)center.x, (int)center.y, pixelRadius, BLUE);
+            DrawCircleLines(
+                center.x, center.y,
+                hoveredTower->getRange() * tileSize,
+                GRAY);
+            DrawCircle(
+                center.x, center.y,
+                hoveredTower->getRange() * tileSize,
+                Fade(BLUE, 0.3f));
         }
 
-        // selected tower display
+        // selected-tower UI overlay
         if (selectedTower != nullptr)
         {
             selectedTowerDisplay();
         }
 
-        // drawing money
-        DrawText(("Money: " + std::to_string(money)).c_str(), 30, 20, 30, BLACK);
+        // money and health
+        DrawText(("Money: " + std::to_string(money)).c_str(),
+                 30, 20, 30, BLACK);
+        DrawText(("Target Health: " + std::to_string(targetHealth)).c_str(),
+                 30, 60, 30, RED);
 
-        // drawing health
-        DrawText(("Target Health: " + std::to_string(targetHealth)).c_str(), 30, 60, 30, RED);
-
-        // gameover UI
-        if (gameOver)
-        {
-            DrawText("GAME OVER!", 550, 450, 60, RED);
-        }
+        // round count and instant back button
+        string roundText = "Round: " + to_string(roundCount) + " / 20";
+        int textWidth = MeasureText(roundText.c_str(), 30);
+        DrawText(roundText.c_str(), 1488 - textWidth - 30, 30, 30, DARKGRAY); // align to top-right
+        DrawRectangleRec(instantGameOverBtn, RED);
+        DrawText("Back",
+                 instantGameOverBtn.x + 10,
+                 instantGameOverBtn.y + 10,
+                 20, WHITE);
+        // cout << "game over drawn" << endl;
     }
-
-    // for other states
-    drawUI();
+    // level editor draw
+    else if (currentState == GameUIState::LevelEditor)
+    {
+        if (!levelEditor)
+            levelEditor = make_unique<LevelEditor>(1488, 912);
+        levelEditor->draw();
+    }
+    else
+    {
+        drawUI();
+    }
 
     EndDrawing();
 }
@@ -318,45 +398,56 @@ void Game::draw()
 void Game::updateRoundSpawn(float deltaTime)
 {
     if (!roundStarted)
-        return; // Skip if round not started yet
+        return;
 
     spawnTimer.countDown(deltaTime);
 
-    if (units.empty() && spawnUnitCount == 0)
+    // If spawn queue is empty, we're in the post-spawn waiting phase
+    if (spawnQueue.empty())
     {
         roundTimer.countDown(deltaTime);
         roundCompleted = true;
+
+        // End round after wait time
         if (roundTimer.timeSIsZero())
         {
-            roundStarted = false; // Reset round state
+            roundStarted = false;
+
+            // If we've completed 20 rounds → WIN
+            if (roundCount >= maxRounds)
+            {
+                gameOver = true; // Reuse existing GameOver UI
+                currentState = GameUIState::GameOver;
+                cout << "🎉 LEVEL COMPLETE! YOU WON 🎉" << endl;
+            }
         }
+
+        return;
     }
 
-    if (spawnUnitCount > 0 && spawnTimer.timeSIsZero())
+    // If it's time to spawn a unit
+    if (spawnTimer.timeSIsZero())
     {
-        EnemyType type = EnemyType::basic;
+        EnemyType type = spawnQueue.front();
+        spawnQueue.pop_front();
 
-        if (spawnUnitCount % 20 == 0)
+        addUnit(level.getRandomEnemySpawnerPosition(), type);
+
+        float cooldown = 1.0f;
+        switch (type)
         {
-            type = EnemyType::tank;
-            enemySpawnCooldown = 3.0f;
-        }
-        else if (spawnUnitCount % 5 == 0)
-        {
-            type = EnemyType::basic;
-            enemySpawnCooldown = 1.0f;
-        }
-        else
-        {
-            type = EnemyType::fast;
-            enemySpawnCooldown = 0.2f;
+        case EnemyType::fast:
+            cooldown = 0.2f;
+            break;
+        case EnemyType::basic:
+            cooldown = 1.0f;
+            break;
+        case EnemyType::tank:
+            cooldown = 3.0f;
+            break;
         }
 
-        currentEnemyType = type;
-        addUnit(level.getRandomEnemySpawnerPosition(), type); // pass the type
-        spawnUnitCount--;
-
-        spawnTimer.setTo(enemySpawnCooldown);
+        spawnTimer.setTo(cooldown);
     }
 }
 
@@ -482,62 +573,170 @@ void Game::upgradeTower(Vector2 mousePosition)
 
 void Game::newRound()
 {
-    // Reset round state
-    roundStarted = true;
-    spawnUnitCount = 100;    // Reset spawn count
-    roundTimer.resetToMax(); // Reset round timer
-    roundCompleted = false;  // Reset round completed state
-    // cout << "New round started!" << endl;
-    // level.printLevelInfo(); // Print level info for debugging'
+    if (roundCount >= maxRounds)
+        return;
 
+    roundStarted = true;
+    roundTimer.resetToMax();
+    roundCompleted = false;
+
+    // income and round progression
     money += baseIncome;
     baseIncome += incomeIncrement;
     roundCount++;
+
+    // setup enemy spawn
+    spawnQueue.clear();
+
+    int fastCount = 10 + roundCount * 2;
+    int basicCount = 5 + roundCount * 3;
+    int tankCount = 2 + roundCount / 2;
+
+    if (roundCount == maxRounds)
+    {
+        fastCount = 60;
+        basicCount = 65;
+        tankCount = 15;
+    }
+
+    for (int i = 0; i < fastCount; ++i)
+        spawnQueue.push_back(EnemyType::fast);
+    for (int i = 0; i < basicCount; ++i)
+        spawnQueue.push_back(EnemyType::basic);
+    for (int i = 0; i < tankCount; ++i)
+        spawnQueue.push_back(EnemyType::tank);
+
+    std::random_shuffle(spawnQueue.begin(), spawnQueue.end());
+
+    spawnTimer.setTo(0);
 }
+
+// void Game::updateUnit(float deltaTime)
+// {
+//     auto it = units.begin();
+//     while (it != units.end())
+//     {
+//         if ((*it) != nullptr)
+//         {
+//             (*it)->update(deltaTime, level, units);
+//             if ((*it)->getIsAlive() == false)
+//             {
+//                 Vector2 unitPosition = (*it)->getPosition();
+//                 Vector2 targetPosition = level.getTargetPosition();
+
+//                 if ((*it)->getIsReached() && !(*it)->hasDamagedTarget)
+//                 {
+
+//                     (*it)->hasDamagedTarget = true;
+
+//                     if((*it)->getEnemyType() == EnemyType::fast) cout << "fast";
+//                     if((*it)->getEnemyType() == EnemyType::basic) cout << "basic";
+//                     if((*it)->getEnemyType() == EnemyType::tank) cout << "tank";
+//                     cout << " pre: " << targetHealth << " aft: ";
+
+//                     targetHealth -= 1; // reduce health
+//                     cout << targetHealth << endl;
+
+//                     if (targetHealth <= 0)
+//                     {
+//                         targetHealth = 0;
+//                         gameOver = true;
+//                         currentState = GameUIState::GameOver;
+//                         cout << "GAME OVER! Target health reached 0." << endl;
+//                     }
+//                 }
+//                 else
+//                 {
+//                     switch ((*it)->getEnemyType())
+//                     {
+//                     case EnemyType::basic:
+//                         money += 30;
+//                         break;
+//                     case EnemyType::fast:
+//                         money += 20;
+//                         break;
+//                     case EnemyType::tank:
+//                         money += 80;
+//                         break;
+//                     }
+//                 }
+
+//                 it = units.erase(it);
+//                 continue;
+//             }
+//         }
+//         ++it;
+//     }
+// }
 
 void Game::updateUnit(float deltaTime)
 {
+    if (gameOver)
+        return;
+
     auto it = units.begin();
     while (it != units.end())
     {
-        if ((*it) != nullptr)
+        auto &unit = *it;
+        if (!unit)
         {
-            (*it)->update(deltaTime, level, units);
-            if ((*it)->getIsAlive() == false)
-            {
-                Vector2 unitPosition = (*it)->getPosition();
-                Vector2 targetPosition = level.getTargetPosition();
-
-                if (Vector2Distance(unitPosition, targetPosition) < 1.5f)
-                {
-                    targetHealth -= 1; // reduce health
-                    if (targetHealth <= 0)
-                    {
-                        targetHealth = 0;
-                        gameOver = true;
-                        cout << "GAME OVER! Target health reached 0." << endl;
-                    }
-                }
-                else
-                {
-                    switch ((*it)->getEnemyType())
-                    {
-                    case EnemyType::basic:
-                        money += 30;
-                        break;
-                    case EnemyType::fast:
-                        money += 20;
-                        break;
-                    case EnemyType::tank:
-                        money += 80;
-                        break;
-                    }
-                }
-
-                it = units.erase(it);
-                continue;
-            }
+            ++it;
+            continue;
         }
+
+        unit->update(deltaTime, level, units);
+
+        float dist = Vector2Distance(unit->getPosition(), level.getTargetPosition());
+
+        if (dist < 1.5f) // Reached target tile
+        {
+            if (!unit->hasDamagedTarget)
+            {
+                unit->hasDamagedTarget = true;
+                targetHealth -= unit->getCurrentHealth();
+
+                cout << "[DAMAGE] UnitID " << unit->unitId
+                     << " | Addr: " << unit.get()
+                     << " | Type: " << (int)unit->getEnemyType()
+                     << " | Target HP: " << targetHealth << endl;
+
+                if (targetHealth <= 0)
+                {
+                    targetHealth = 0;
+                    gameOver = true;
+                    currentState = GameUIState::GameOver;
+                }
+            }
+            else
+            {
+                cout << "[SKIP] UnitID " << unit->unitId << " already damaged target\n";
+            }
+
+            it = units.erase(it);
+            continue;
+        }
+
+        if (!unit->getIsAlive())
+        {
+            switch (unit->getEnemyType())
+            {
+            case EnemyType::basic:
+                money += 30;
+                break;
+            case EnemyType::fast:
+                money += 20;
+                break;
+            case EnemyType::tank:
+                money += 80;
+                break;
+            }
+
+            // cout << "[DEAD] UnitID " << unit->unitId << " died before reaching target\n";
+
+            it = units.erase(it);
+            continue;
+        }
+
         ++it;
     }
 }
@@ -561,6 +760,22 @@ void Game::update(float deltaTime)
 {
     if (currentState == GameUIState::Paused || gameOver)
         return;
+
+    if (currentState == GameUIState::LevelEditor)
+    {
+        if (!levelEditor)
+            levelEditor = make_unique<LevelEditor>(1488, 912);
+
+        bool stillEditing = true;
+        levelEditor->processInput(stillEditing);
+
+        if (!stillEditing)
+        {
+            levelEditor->reset(); // Delete and fully reset the editor
+            currentState = GameUIState::MainMenu;
+        }
+        return;
+    }
 
     updateUnit(deltaTime); // update all units
 
@@ -592,6 +807,10 @@ void Game::update(float deltaTime)
 
 void Game::drawUI()
 {
+    // if (currentState == GameUIState::Playing || currentState == GameUIState::Paused)
+    // {
+    // }
+
     if (currentState == GameUIState::MainMenu)
     {
         DrawText("TOWER DEFENSE", 580, 180, 40, DARKGRAY);
@@ -606,6 +825,9 @@ void Game::drawUI()
 
         DrawRectangleRec(quitBtn, LIGHTGRAY);
         DrawText("Quit", quitBtn.x + 20, quitBtn.y + 15, 20, BLACK);
+
+        DrawRectangleRec(levelEditorBtn, LIGHTGRAY);
+        DrawText("Level Editor", levelEditorBtn.x + 20, levelEditorBtn.y + 15, 20, BLACK);
     }
     else if (currentState == GameUIState::Controls)
     {
@@ -640,6 +862,22 @@ void Game::drawUI()
 
         DrawRectangleRec(backBtn, LIGHTGRAY);
         DrawText("Back", backBtn.x + 10, backBtn.y + 10, 20, BLACK);
+    }
+    else if (currentState == GameUIState::GameOver)
+    {
+        if (gameWon)
+            DrawText("🎉 YOU WON! 🎉", 600, 200, 50, DARKGREEN);
+        else
+            DrawText("Game Over", 600, 200, 50, RED);
+
+        DrawRectangleRec(gameOverMainMenuBtn, LIGHTGRAY);
+        DrawText("Main Menu", gameOverMainMenuBtn.x + 20, gameOverMainMenuBtn.y + 15, 20, BLACK);
+
+        DrawRectangleRec(gameOverLevelSelectBtn, LIGHTGRAY);
+        DrawText("Level Select", gameOverLevelSelectBtn.x + 20, gameOverLevelSelectBtn.y + 15, 20, BLACK);
+
+        DrawRectangleRec(gameOverRestartBtn, LIGHTGRAY);
+        DrawText("Restart Level", gameOverRestartBtn.x + 20, gameOverRestartBtn.y + 15, 20, BLACK);
     }
 }
 

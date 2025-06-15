@@ -21,7 +21,7 @@ Tower::Tower(Vector2 setPosition, TowerType setType) :
         textureTileTower = *TextureLoader::LoadTextureFromFile("Basic Tower.png");
         range = 4.0f;
         fireCooldown = 1.0f;
-        projectileSpeed = 3.0f;
+        projectileSpeed = 20.0f;
         projectileMaxDistance = 5.0f;
         projectileDamage = 1;
         break;
@@ -222,13 +222,13 @@ void Tower::upgrade() {
     switch (type) {
         case TowerType::basic:
             range += 0.5f;
-            projectileDamage += 1;
+            // projectileDamage += 1;
             fireCooldown = max(0.0f, fireCooldown - 0.3f);
             break;
 
         case TowerType::sniper:
             range += 3.0f;
-            projectileDamage += 2;
+            projectileDamage += 1;
             projectileMaxDistance += 3.0f;
             fireCooldown = max(0.5f, fireCooldown - 0.5f);
             break;

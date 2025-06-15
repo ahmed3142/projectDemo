@@ -14,14 +14,18 @@ class LevelEditor {
     vector<LevelData> allLevels;
 
     int tileSize = 48;
-
     int screenWidth;
     int screenHeight;
 
+    Rectangle backBtn = {20, 20, 220, 50};
+    bool editorDone = false;
+
 public:
     LevelEditor(int screenWidth, int screenHeight);
-    void run();
+    // void run();
     void processInput(bool &running);
     void draw();
     LevelData getLevelData() const;
+    bool isDone() const { return editorDone; }
+    void reset();
 };

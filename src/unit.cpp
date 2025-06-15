@@ -11,7 +11,8 @@
 
 Unit::Unit(Vector2 setPosition, EnemyType enemyType) : 
     position(setPosition),
-    type(enemyType)
+    type(enemyType),
+    unitId(nextId++)
 {
     switch (type) {
         case EnemyType::basic:
@@ -61,10 +62,11 @@ void Unit::update(float deltaTime, Level &level, vector<shared_ptr<Unit>> &units
     float moveDistance = (this->speed) * deltaTime;
     // cout << "Unit at position: (" << position.x << ", " << position.y << ") with target distance: " << targetDistance << endl;
 
-    if(targetDistance < 1.5f)
-    {
-        alive=false;
-    }
+    // if(targetDistance < 0.7f)
+    // {
+    //     alive=false;
+    //     reachedTarget=true;
+    // }
 
     if (moveDistance > targetDistance)
         moveDistance = targetDistance;
@@ -140,7 +142,7 @@ int Unit::getCurrentHealth	()
 
 void Unit::damage(int damageAmount){
     if(damageAmount>0){
-        currentHealth -= damageAmount;
+        currentHealth = max(0, currentHealth - damageAmount);
         // cout << "cuurent health: " << currentHealth << endl; 
         if(currentHealth <= 0){
             currentHealth=0;
@@ -156,4 +158,8 @@ Vector2 Unit::getVelocity() const
 
 EnemyType Unit::getEnemyType() const {
     return type;
+}
+
+bool Unit::getIsReached() {
+    return reachedTarget;
 }

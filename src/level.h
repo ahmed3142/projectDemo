@@ -79,4 +79,7 @@ public:
     
     void printLevelInfo();
     void loadFromData(const LevelData &data);
+    
+    // bugged i think
+    void resetLevel();
 };

@@ -59,10 +59,9 @@ int main()
 
     if (isEditorMode)
     {
-        LevelEditor editor(screenWidth, screenHeight);
-        // cout << screenWidth << " " << screenHeight << endl;
-        editor.run();
-        LevelData createdLevel = editor.getLevelData();
+        //LevelEditor editor(screenWidth, screenHeight);
+        //editor.run();
+       // LevelData createdLevel = editor.getLevelData();
     }
     else
     {

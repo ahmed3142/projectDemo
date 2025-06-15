@@ -22,6 +22,8 @@ class Unit {
 
     Texture2D texture;
     bool alive = true;
+    bool reachedTarget = false;
+    
 
     const int healthBasic=2;
     int currentHealth = healthBasic; 
@@ -38,10 +40,17 @@ public:
     void draw(int tileSize);
     bool checkOverlap(Vector2 positionOfOtherUnit, float otherUnitSize);
     bool getIsAlive();
+    bool getIsReached();
     Vector2 getPosition();
     int getCurrentHealth();
     void damage(int damageAmount);
     Vector2 getVelocity() const;
 
+    bool hasDamagedTarget = false;
+
     EnemyType getEnemyType() const;
+
+    inline static int nextId = 1;
+    int unitId;
+
 };
