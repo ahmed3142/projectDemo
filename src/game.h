@@ -56,6 +56,8 @@ class Game
     void removeTower(Vector2 mousePosition);
     void upgradeTower(Vector2 mousePosition);
 
+    void updateMainMenu(float deltaTime);
+
     shared_ptr<Tower> hoveredTower = nullptr;
 
     Timer spawnTimer, // gap between spawning units
@@ -80,20 +82,6 @@ class Game
 
     bool roundCompleted = false;
 
-    Rectangle startBtn = {600, 300, 300, 60};
-    Rectangle levelSelectBtn = {600, 380, 300, 60};
-    Rectangle controlsBtn = {600, 460, 300, 60};
-    Rectangle quitBtn = {600, 540, 300, 60};
-    Rectangle resumeBtn = {600, 380, 300, 60};
-    Rectangle backBtn = {50, 50, 120, 40};
-    Rectangle levelEditorBtn = {600, 620, 300, 60};
-
-
-    Rectangle gameOverMainMenuBtn = {600, 300, 300, 60};
-    Rectangle gameOverLevelSelectBtn = {600, 380, 300, 60};
-    Rectangle gameOverRestartBtn = {600, 460, 300, 60};
-    Rectangle instantGameOverBtn   = {1280,  852, 150, 40};
-
     int selectLevelIndex = -1;
     vector<LevelData> allLevels;
 
@@ -104,6 +92,9 @@ class Game
     int incomeIncrement = 100;
 
     int calculateUpgradeCost(shared_ptr<Tower> t);
+
+    //buying towers
+    TowerType nextTowerType = TowerType::basic;
 
     // selling tower
     bool sellConfirm = false;
@@ -141,6 +132,40 @@ class Game
 
     // level editor
     unique_ptr<LevelEditor> levelEditor;
+
+    // icons and buttons
+    Texture2D basicTowerIcon;
+    Texture2D sniperTowerIcon;
+
+    void DrawNeonButton(Rectangle rect, const char* label, Color normalColor, Color hoverColor, Color clickColor);
+
+    Rectangle startBtn = {600, 300, 300, 60};
+    Rectangle levelSelectBtn = {600, 380, 300, 60};
+    Rectangle controlsBtn = {600, 460, 300, 60};
+    Rectangle quitBtn = {600, 540, 300, 60};
+    Rectangle resumeBtn = {600, 380, 300, 60};
+    Rectangle backBtn = {50, 50, 120, 40};
+    Rectangle levelEditorBtn = {600, 620, 300, 60};
+
+    Color btnColor = Fade(SKYBLUE, 0.2f);
+    Color NEON_BLUE = {0, 255, 255, 255};     // Cyan
+    Color NEON_PURPLE = {255, 0, 255, 255};   // Magenta
+    Color NEON_GREEN = {0, 255, 100, 255};    // Bright green
+    Color NEON_PINK = {255, 20, 147, 255};    // Hot pink
+    Color NEON_YELLOW = {255, 255, 100, 255};
+
+    Rectangle gameOverMainMenuBtn = {600, 300, 300, 60};
+    Rectangle gameOverLevelSelectBtn = {600, 380, 300, 60};
+    Rectangle gameOverRestartBtn = {600, 460, 300, 60};
+    Rectangle instantGameOverBtn   = {1280,  852, 150, 40};
+
+    Rectangle basicTowerBtnRect   = { 10, 100, tileSize , tileSize };
+    Rectangle sniperTowerBtnRect  = { 10, 100 + tileSize + 10, tileSize,tileSize };
+
+    // main menu animation
+    Texture2D mainMenuBackground[500];
+    int mainMenuCurrentFrame = 0;
+    Timer mainMenuAnimationTimer = Timer(1.0f/30.0f); // 30 FPS
 
 public:
     Game(int windowWidth, int windowHeight, const LevelData &data);

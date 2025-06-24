@@ -16,12 +16,27 @@ Game::Game(int windowWidth, int windowHeight, const LevelData &data)
       money(baseMoney)
 {
     textureOverlay = *TextureLoader::LoadTextureFromFile("Overlay.png"); // menu
+    basicTowerIcon = *TextureLoader::LoadTextureFromFile("Basic Tower.png");
+    sniperTowerIcon = *TextureLoader::LoadTextureFromFile("Sniper Tower.png");
 
+    // loading levels
     allLevels = loadAllLevelsFromFile("all_levels.json");
     if (allLevels.empty())
     {
         cout << "No levels found." << endl;
         exit(1);
+    }
+
+    // loading main menu background
+    for (int i = 0; i < 450; ++i)
+    {
+        string numstr = to_string(i + 1);
+        while (numstr.length() < 5)
+        {
+            numstr = "0" + numstr;
+        }
+        string filename = "mainMenuAnimation/" + numstr + ".png";
+        mainMenuBackground[i] = *TextureLoader::LoadTextureFromFile(filename);
     }
 
     const float deltaTime = 1.0f / 60.0f;
@@ -281,6 +296,18 @@ void Game::processEvents(bool &running)
         sellConfirm = false;
         selectedTower = nullptr;
     }
+
+    // buy tower
+    if (mouseClick && CheckCollisionPointRec(mouse, basicTowerBtnRect))
+    {
+        nextTowerType = TowerType::basic;
+        PlacementModeCurrent = PlacementMode::tower;
+    }
+    if (mouseClick && CheckCollisionPointRec(mouse, sniperTowerBtnRect))
+    {
+        nextTowerType = TowerType::sniper;
+        PlacementModeCurrent = PlacementMode::tower;
+    }
 }
 
 void Game::addUnit(Vector2 spawnPos, EnemyType type)
@@ -379,6 +406,21 @@ void Game::draw()
                  instantGameOverBtn.y + 10,
                  20, WHITE);
         // cout << "game over drawn" << endl;
+
+        // tower icons
+        Color basicTint = (money >= 200) ? WHITE : GRAY;
+        DrawTextureEx(basicTowerIcon,
+                      {basicTowerBtnRect.x, basicTowerBtnRect.y},
+                      0.0f, 1.0f, basicTint);
+        if (nextTowerType == TowerType::basic)
+            DrawRectangleLinesEx(basicTowerBtnRect, 2, YELLOW);
+
+        Color sniperTint = (money >= 400) ? WHITE : GRAY;
+        DrawTextureEx(sniperTowerIcon,
+                      {sniperTowerBtnRect.x, sniperTowerBtnRect.y},
+                      0.0f, 1.0f, sniperTint);
+        if (nextTowerType == TowerType::sniper)
+            DrawRectangleLinesEx(sniperTowerBtnRect, 2, YELLOW);
     }
     // level editor draw
     else if (currentState == GameUIState::LevelEditor)
@@ -464,7 +506,7 @@ void Game::addTower(Vector2 mousePosition)
                 return;
             }
         }
-        TowerType type = IsKeyDown(KEY_S) ? TowerType::sniper : TowerType::basic;
+        TowerType type = nextTowerType;
 
         int towerCost = 0;
 
@@ -761,6 +803,12 @@ void Game::update(float deltaTime)
     if (currentState == GameUIState::Paused || gameOver)
         return;
 
+    if (currentState == GameUIState::MainMenu)
+    {
+        updateMainMenu(deltaTime);
+        return;
+    }
+
     if (currentState == GameUIState::LevelEditor)
     {
         if (!levelEditor)
@@ -813,21 +861,15 @@ void Game::drawUI()
 
     if (currentState == GameUIState::MainMenu)
     {
-        DrawText("TOWER DEFENSE", 580, 180, 40, DARKGRAY);
-        DrawRectangleRec(startBtn, LIGHTGRAY);
-        DrawText("Start Game", startBtn.x + 20, startBtn.y + 15, 20, BLACK);
+        DrawTexture(mainMenuBackground[mainMenuCurrentFrame], 0, 0, WHITE);
 
-        DrawRectangleRec(levelSelectBtn, LIGHTGRAY);
-        DrawText("Select Level", levelSelectBtn.x + 20, levelSelectBtn.y + 15, 20, BLACK);
+        DrawText("CG DEFENSE", 620, 180, 40, DARKGRAY);
 
-        DrawRectangleRec(controlsBtn, LIGHTGRAY);
-        DrawText("Controls", controlsBtn.x + 20, controlsBtn.y + 15, 20, BLACK);
-
-        DrawRectangleRec(quitBtn, LIGHTGRAY);
-        DrawText("Quit", quitBtn.x + 20, quitBtn.y + 15, 20, BLACK);
-
-        DrawRectangleRec(levelEditorBtn, LIGHTGRAY);
-        DrawText("Level Editor", levelEditorBtn.x + 20, levelEditorBtn.y + 15, 20, BLACK);
+        DrawNeonButton(startBtn, "Start Game", SKYBLUE, NEON_PINK, WHITE);
+        DrawNeonButton(levelSelectBtn, "Select Level", SKYBLUE, NEON_PINK, WHITE);
+        DrawNeonButton(controlsBtn, "Controls", SKYBLUE, NEON_PINK, WHITE);
+        DrawNeonButton(quitBtn, "Quit", SKYBLUE, NEON_PINK, WHITE);
+        DrawNeonButton(levelEditorBtn, "Level Editor", SKYBLUE, NEON_PINK, WHITE);
     }
     else if (currentState == GameUIState::Controls)
     {
@@ -992,4 +1034,31 @@ void Game::selectedTowerDisplay()
     {
         DrawText("Right-click to SELL selected tower", 30, 90, 18, RED);
     }
+}
+
+void Game::updateMainMenu(float deltaTime)
+{
+    mainMenuAnimationTimer.countDown(deltaTime);
+    if (mainMenuAnimationTimer.timeSIsZero())
+    {
+        mainMenuAnimationTimer.resetToMax();
+        mainMenuCurrentFrame = (mainMenuCurrentFrame + 1) % 450; // Loop through backgrounds
+    }
+}
+
+void Game::DrawNeonButton(Rectangle rect, const char *label, Color normalColor, Color hoverColor, Color clickColor)
+{
+    Vector2 mouse = GetMousePosition();
+    bool hovered = CheckCollisionPointRec(mouse, rect);
+    bool clicked = hovered && IsMouseButtonDown(MOUSE_LEFT_BUTTON);
+
+    Color colorToUse = normalColor;
+    if (clicked)
+        colorToUse = clickColor;
+    else if (hovered)
+        colorToUse = hoverColor;
+
+    DrawRectangleRounded(rect, 0.35f, 48, Fade(colorToUse, 0.2f));
+    DrawRectangleRoundedLines(rect, 0.35f, 48, Fade(colorToUse, 0.4f)); // neon outline
+    DrawText(label, rect.x + 20, rect.y + 15, 22, WHITE);
 }
