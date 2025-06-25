@@ -27,20 +27,11 @@ Game::Game(int windowWidth, int windowHeight, const LevelData &data)
         exit(1);
     }
 
-    // loading main menu background
-    for (int i = 0; i < 450; ++i)
-    {
-        string numstr = to_string(i + 1);
-        while (numstr.length() < 5)
-        {
-            numstr = "0" + numstr;
-        }
-        string filename = "mainMenuAnimation/" + numstr + ".png";
-        mainMenuBackground[i] = *TextureLoader::LoadTextureFromFile(filename);
-    }
-
     const float deltaTime = 1.0f / 60.0f;
     float accumulator = 0.0f;
+
+    // loading main menu background
+    loadMainMenu(deltaTime);
 
     bool running = true;
     SetTargetFPS(60);
@@ -142,6 +133,11 @@ void Game::processEvents(bool &running)
         {
             currentState = GameUIState::Playing;
         }
+        if(mouseClick && CheckCollisionPointRec(mouse, instantGameOverBtn))
+        {
+            gameOver = true;
+            currentState = GameUIState::GameOver;
+        }
         return;
     }
 
@@ -153,31 +149,37 @@ void Game::processEvents(bool &running)
             currentState = GameUIState::MainMenu;
             gameOver = false;
             gameWon = false;
-            targetHealth = 100;
+            targetHealth = baseHealth;
             money = baseMoney;
             units.clear();
             towers.clear();
+            selectedTower = nullptr;
+            roundCount = 0;
         }
         else if (mouseClick && CheckCollisionPointRec(mouse, gameOverLevelSelectBtn))
         {
             currentState = GameUIState::LevelSelect;
             gameOver = false;
             gameWon = false;
-            targetHealth = 100;
+            targetHealth = baseHealth;
             money = baseMoney;
             units.clear();
             towers.clear();
+            selectedTower = nullptr;
+            roundCount = 0;
         }
         else if (mouseClick && CheckCollisionPointRec(mouse, gameOverRestartBtn))
         {
             currentState = GameUIState::Playing;
             gameOver = false;
             gameWon = false;
-            targetHealth = 100;
+            targetHealth = baseHealth;
             money = baseMoney;
             units.clear();
             towers.clear();
-            level.loadFromData(allLevels[selectLevelIndex]); // restart level
+            selectedTower = nullptr;
+            roundCount = 0;
+            level.loadFromData(allLevels[selectLevelIndex]);
         }
         return;
     }
@@ -330,7 +332,7 @@ void Game::draw()
     BeginDrawing();
     ClearBackground(RAYWHITE);
 
-    if (currentState == GameUIState::Playing || currentState == GameUIState::Paused)
+    if (currentState == GameUIState::Playing)
     {
         // draw the map
         level.draw(tileSize);
@@ -359,7 +361,7 @@ void Game::draw()
             DrawTexture(textureOverlay, 40, 40, WHITE);
 
         // round-completed message
-        if (roundCompleted && units.size() == 0)
+        if (roundCompleted && units.size() == 0 && roundCount > 0)
         {
             int textX = 1488 / 2 - 200;
             int textY = 912 / 2 - 100;
@@ -393,34 +395,35 @@ void Game::draw()
         // money and health
         DrawText(("Money: " + std::to_string(money)).c_str(),
                  30, 20, 30, BLACK);
-        DrawText(("Target Health: " + std::to_string(targetHealth)).c_str(),
+        DrawText(("Target Health: " + std::to_string(targetHealth/100.0f)).c_str(),
                  30, 60, 30, RED);
 
         // round count and instant back button
-        string roundText = "Round: " + to_string(roundCount) + " / 20";
+        string roundText = "Round: " + to_string(roundCount) + " / 10";
         int textWidth = MeasureText(roundText.c_str(), 30);
-        DrawText(roundText.c_str(), 1488 - textWidth - 30, 30, 30, DARKGRAY); // align to top-right
-        DrawRectangleRec(instantGameOverBtn, RED);
-        DrawText("Back",
-                 instantGameOverBtn.x + 10,
-                 instantGameOverBtn.y + 10,
-                 20, WHITE);
+        DrawText(roundText.c_str(), 1488 - textWidth - 30, 9, 30, DARKGRAY); // align to top-right
+        // DrawRectangleRec(instantGameOverBtn, RED);
+        // DrawText("Back",
+        //          instantGameOverBtn.x + 10,
+        //          instantGameOverBtn.y + 10,
+        //          20, WHITE);
+        DrawNeonButton(instantGameOverBtn, "End Game", SKYBLUE, NEON_PINK, WHITE);
         // cout << "game over drawn" << endl;
 
         // tower icons
-        Color basicTint = (money >= 200) ? WHITE : GRAY;
+        Color basicTint = (money >= 200) ? NEON_GREEN : NEON_PURPLE;
         DrawTextureEx(basicTowerIcon,
                       {basicTowerBtnRect.x, basicTowerBtnRect.y},
                       0.0f, 1.0f, basicTint);
         if (nextTowerType == TowerType::basic)
-            DrawRectangleLinesEx(basicTowerBtnRect, 2, YELLOW);
+            DrawRectangleLinesEx(basicTowerBtnRect, 2, NEON_BLUE);
 
-        Color sniperTint = (money >= 400) ? WHITE : GRAY;
+        Color sniperTint = (money >= 400) ? NEON_GREEN : NEON_PURPLE;
         DrawTextureEx(sniperTowerIcon,
                       {sniperTowerBtnRect.x, sniperTowerBtnRect.y},
                       0.0f, 1.0f, sniperTint);
         if (nextTowerType == TowerType::sniper)
-            DrawRectangleLinesEx(sniperTowerBtnRect, 2, YELLOW);
+            DrawRectangleLinesEx(sniperTowerBtnRect, 2, NEON_BLUE);
     }
     // level editor draw
     else if (currentState == GameUIState::LevelEditor)
@@ -627,6 +630,12 @@ void Game::newRound()
     baseIncome += incomeIncrement;
     roundCount++;
 
+    if(roundCount == 1){
+        money = baseMoney;
+        baseIncome = 500;
+        targetHealth = baseHealth;
+    }
+
     // setup enemy spawn
     spawnQueue.clear();
 
@@ -800,10 +809,8 @@ void Game::updateProjectiles(float deltaTime)
 
 void Game::update(float deltaTime)
 {
-    if (currentState == GameUIState::Paused || gameOver)
-        return;
-
-    if (currentState == GameUIState::MainMenu)
+    if (currentState == GameUIState::MainMenu || currentState == GameUIState::Controls || currentState == GameUIState::LevelSelect
+        || currentState == GameUIState::GameOver || currentState == GameUIState::Paused)
     {
         updateMainMenu(deltaTime);
         return;
@@ -873,6 +880,8 @@ void Game::drawUI()
     }
     else if (currentState == GameUIState::Controls)
     {
+        DrawTexture(mainMenuBackground[mainMenuCurrentFrame], 0, 0, WHITE);
+
         DrawText("Controls:", 100, 100, 30, DARKGRAY);
         DrawText("- [1] Place Wall", 120, 150, 20, BLACK);
         DrawText("- [2] Place Tower", 120, 180, 20, BLACK);
@@ -880,46 +889,64 @@ void Game::drawUI()
         DrawText("- [U] Upgrade Tower", 120, 240, 20, BLACK);
         DrawText("- [M] Toggle Overlay", 120, 270, 20, BLACK);
         DrawText("- [SPACE] New Round", 120, 300, 20, BLACK);
-        DrawRectangleRec(backBtn, LIGHTGRAY);
-        DrawText("Back", backBtn.x + 10, backBtn.y + 10, 20, BLACK);
-    }
-    else if (currentState == GameUIState::Paused)
-    {
-        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.2f));
-        DrawText("Game Paused", 620, 250, 30, DARKGRAY);
-        DrawRectangleRec(resumeBtn, LIGHTGRAY);
-        DrawText("Resume", resumeBtn.x + 20, resumeBtn.y + 15, 20, BLACK);
+
+        // DrawRectangleRec(backBtn, LIGHTGRAY);
+        // DrawText("Back", backBtn.x + 10, backBtn.y + 10, 20, BLACK);
+
+        DrawNeonButton(backBtn, "Back", SKYBLUE, NEON_PINK, WHITE);
     }
     else if (currentState == GameUIState::LevelSelect)
     {
-        DrawText("Select Level", 100, 80, 40, DARKGRAY);
+        DrawTexture(mainMenuBackground[mainMenuCurrentFrame], 0, 0, WHITE);
+
+        DrawText("Select Level", GetScreenWidth() / 2 - MeasureText("Select Level", 40) / 2 + 5, 80, 40, DARKGRAY);
 
         for (int i = 0; i < (int)allLevels.size(); ++i)
         {
+            
             Rectangle levelBtn = {600, 200 + i * 60, 300, 50};
-            DrawRectangleRec(levelBtn, LIGHTGRAY);
+            //DrawRectangleRec(levelBtn, LIGHTGRAY);
             string label = "Level " + to_string(i + 1);
-            DrawText(label.c_str(), levelBtn.x + 20, levelBtn.y + 15, 20, BLACK);
+            //DrawText(label.c_str(), levelBtn.x + 20, levelBtn.y + 15, 20, BLACK);
+            DrawNeonButton(levelBtn, label.c_str(), SKYBLUE, NEON_PINK, WHITE);
         }
 
-        DrawRectangleRec(backBtn, LIGHTGRAY);
-        DrawText("Back", backBtn.x + 10, backBtn.y + 10, 20, BLACK);
+        // DrawRectangleRec(backBtn, LIGHTGRAY);
+        // DrawText("Back", backBtn.x + 10, backBtn.y + 10, 20, BLACK);
+
+        DrawNeonButton(backBtn, "Back", SKYBLUE, NEON_PINK, WHITE);
+
     }
     else if (currentState == GameUIState::GameOver)
     {
+        DrawTexture(mainMenuBackground[mainMenuCurrentFrame], 0, 0, WHITE);
+
         if (gameWon)
             DrawText("🎉 YOU WON! 🎉", 600, 200, 50, DARKGREEN);
         else
             DrawText("Game Over", 600, 200, 50, RED);
 
-        DrawRectangleRec(gameOverMainMenuBtn, LIGHTGRAY);
-        DrawText("Main Menu", gameOverMainMenuBtn.x + 20, gameOverMainMenuBtn.y + 15, 20, BLACK);
+        // DrawRectangleRec(gameOverMainMenuBtn, LIGHTGRAY);
+        // DrawText("Main Menu", gameOverMainMenuBtn.x + 20, gameOverMainMenuBtn.y + 15, 20, BLACK);
 
-        DrawRectangleRec(gameOverLevelSelectBtn, LIGHTGRAY);
-        DrawText("Level Select", gameOverLevelSelectBtn.x + 20, gameOverLevelSelectBtn.y + 15, 20, BLACK);
+        // DrawRectangleRec(gameOverLevelSelectBtn, LIGHTGRAY);
+        // DrawText("Level Select", gameOverLevelSelectBtn.x + 20, gameOverLevelSelectBtn.y + 15, 20, BLACK);
 
-        DrawRectangleRec(gameOverRestartBtn, LIGHTGRAY);
-        DrawText("Restart Level", gameOverRestartBtn.x + 20, gameOverRestartBtn.y + 15, 20, BLACK);
+        // DrawRectangleRec(gameOverRestartBtn, LIGHTGRAY);
+        // DrawText("Restart Level", gameOverRestartBtn.x + 20, gameOverRestartBtn.y + 15, 20, BLACK);
+
+        DrawNeonButton(gameOverMainMenuBtn, "Main Menu", SKYBLUE, NEON_PINK, WHITE);
+        DrawNeonButton(gameOverLevelSelectBtn, "Level Select", SKYBLUE, NEON_PINK, WHITE);
+        DrawNeonButton(gameOverRestartBtn, "Restart Level", SKYBLUE, NEON_PINK, WHITE);
+    }
+    else if (currentState == GameUIState::Paused){
+        DrawTexture(mainMenuBackground[mainMenuCurrentFrame], 0, 0, WHITE);
+
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.2f));
+        DrawText("Game Paused", 620, 250, 30, DARKGRAY);
+        DrawNeonButton(resumeBtn, "Resume", SKYBLUE, NEON_PINK, WHITE);
+
+        DrawNeonButton(instantGameOverBtn, "Game Over", SKYBLUE, NEON_PINK, WHITE);
     }
 }
 
@@ -1061,4 +1088,54 @@ void Game::DrawNeonButton(Rectangle rect, const char *label, Color normalColor, 
     DrawRectangleRounded(rect, 0.35f, 48, Fade(colorToUse, 0.2f));
     DrawRectangleRoundedLines(rect, 0.35f, 48, Fade(colorToUse, 0.4f)); // neon outline
     DrawText(label, rect.x + 20, rect.y + 15, 22, WHITE);
+}
+
+void Game::loadMainMenu(float deltaTime){
+    for(int i = 0; i < 22; i++){
+        string numstr = to_string(i + 1);
+        while (numstr.length() < 5)
+        {
+            numstr = "0" + numstr;
+        }
+        string filename = "loadingAnimation2/" + numstr + ".png";
+        loadingMainMenuAnimation[i] = *TextureLoader::LoadTextureFromFile(filename);
+    }
+
+    for (int i = 0; i < 450; ++i)
+    {
+        string numstr = to_string(i + 1);
+        while (numstr.length() < 5)
+        {
+            numstr = "0" + numstr;
+        }
+        string filename = "mainMenuAnimation/" + numstr + ".png";
+        mainMenuBackground[i] = *TextureLoader::LoadTextureFromFile(filename);
+
+        loadingMainMenuAnimationTimer.countDown(deltaTime);
+        if (loadingMainMenuAnimationTimer.timeSIsZero())
+        {
+            loadingMainMenuAnimationTimer.resetToMax();
+            loadingMainMenuAnimationCurrentFrame = (loadingMainMenuAnimationCurrentFrame + 1) % 22; 
+        }
+
+        BeginDrawing();
+        ClearBackground(BLACK);
+
+        // progress bar
+        float progress = (float)(i + 1) / 450.0f;
+        int barWidth = 400; 
+        int barHeight = 16;
+        int progressBarWidth = (int)(barWidth * progress);
+
+        DrawTexture(loadingMainMenuAnimation[loadingMainMenuAnimationCurrentFrame], 670, 240, WHITE);
+
+        Rectangle progressBarRect = {550, 400,(float) barWidth,(float) barHeight};
+        Rectangle progressFillRect = {progressBarRect.x, progressBarRect.y, (float)progressBarWidth, progressBarRect.height};
+
+        DrawRectangleRounded(progressBarRect, 0.5f, 30, Fade(SKYBLUE, 0.2f));
+        DrawRectangleRounded(progressFillRect, 0.5f, 30, NEON_BLUE);
+        DrawText("Loading... Please wait", 600, 360, 30, DARKGRAY);
+
+        EndDrawing();
+    }
 }

@@ -114,7 +114,8 @@ class Game
     Timer clickLockTimer = Timer(0.1f);
 
     // castle(target tile) health
-    int targetHealth = 100;
+    int targetHealth = 400;
+    int baseHealth = 400;
 
     // game over
     bool gameOver = false;
@@ -127,7 +128,7 @@ class Game
     deque<EnemyType> spawnQueue;
 
     // round calc
-    const int maxRounds = 3;
+    const int maxRounds = 10;
     bool gameWon = false;
 
     // level editor
@@ -144,7 +145,7 @@ class Game
     Rectangle controlsBtn = {600, 460, 300, 60};
     Rectangle quitBtn = {600, 540, 300, 60};
     Rectangle resumeBtn = {600, 380, 300, 60};
-    Rectangle backBtn = {50, 50, 120, 40};
+    Rectangle backBtn = {50, 50, 120, 52};
     Rectangle levelEditorBtn = {600, 620, 300, 60};
 
     Color btnColor = Fade(SKYBLUE, 0.2f);
@@ -157,15 +158,19 @@ class Game
     Rectangle gameOverMainMenuBtn = {600, 300, 300, 60};
     Rectangle gameOverLevelSelectBtn = {600, 380, 300, 60};
     Rectangle gameOverRestartBtn = {600, 460, 300, 60};
-    Rectangle instantGameOverBtn   = {1280,  852, 150, 40};
+    Rectangle instantGameOverBtn   = {1280,  852, 180, 52};
 
-    Rectangle basicTowerBtnRect   = { 10, 100, tileSize , tileSize };
-    Rectangle sniperTowerBtnRect  = { 10, 100 + tileSize + 10, tileSize,tileSize };
+    Rectangle basicTowerBtnRect   = { 1430, 48, tileSize , tileSize };
+    Rectangle sniperTowerBtnRect  = { 1430, 48 + tileSize, tileSize,tileSize };
 
     // main menu animation
     Texture2D mainMenuBackground[500];
+    Texture2D loadingMainMenuAnimation[100];
     int mainMenuCurrentFrame = 0;
     Timer mainMenuAnimationTimer = Timer(1.0f/30.0f); // 30 FPS
+    void loadMainMenu(float deltaTime);
+    Timer loadingMainMenuAnimationTimer = Timer(1.0f/60.0f);
+    int loadingMainMenuAnimationCurrentFrame = 0;
 
 public:
     Game(int windowWidth, int windowHeight, const LevelData &data);
