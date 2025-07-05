@@ -13,7 +13,8 @@
 using namespace std;
 enum class TowerType {
         basic,
-        sniper 
+        sniper,
+        cannon,
 };
 
 class Tower {
@@ -51,7 +52,7 @@ class Tower {
     weak_ptr<Unit> targetEnemy;
 
     bool updateAngle(float deltaTime);
-    void shoot(vector<Projectile>& projectiles);
+    void shoot(vector<Projectile>& projectiles, vector<shared_ptr<Unit>>& units);
 
     Timer weaponTimer; // Timer for weapon cooldown
 

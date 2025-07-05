@@ -53,7 +53,6 @@ bool Unit::checkOverlap(Vector2 positionOfOtherUnit, float otherUnitSize) {
     return Vector2DistanceSqr(positionOfOtherUnit, position) <= totalSize * totalSize;
 }
 
-
 void Unit::update(float deltaTime, Level &level, vector<shared_ptr<Unit>> &units)
 {
     Vector2 oldPosition = position;
@@ -81,7 +80,7 @@ void Unit::update(float deltaTime, Level &level, vector<shared_ptr<Unit>> &units
 
     // moving forward without bumping other unit
     bool ok = true;
-    for (int count = 0; count < units.size() && ok; count++)
+    for (int count = 0; count < (int)units.size() && ok; count++)
     {
         auto &unitSelected = units[count];
         if(unitSelected != nullptr && unitSelected->checkOverlap(position, this->size) && unitSelected.get() != this)
@@ -142,8 +141,9 @@ int Unit::getCurrentHealth	()
 
 void Unit::damage(int damageAmount){
     if(damageAmount>0){
+        cout << "Unit " << unitId << " damaged by " << damageAmount << endl;
         currentHealth = max(0, currentHealth - damageAmount);
-        // cout << "cuurent health: " << currentHealth << endl; 
+        cout << "cuurent health: " << currentHealth << endl; 
         if(currentHealth <= 0){
             currentHealth=0;
             alive = false;

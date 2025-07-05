@@ -10,14 +10,15 @@ using namespace std;
 #define rrep(i, a, b) for (int i = (a); i < (b); ++i)
 
 Game::Game(int windowWidth, int windowHeight, const LevelData &data)
-    : PlacementModeCurrent(PlacementMode::tower),
-      level(windowWidth / tileSize, windowHeight / tileSize),
+    : level(windowWidth / tileSize, windowHeight / tileSize),
+      PlacementModeCurrent(PlacementMode::tower),
       spawnTimer(2.0f), roundTimer(2.0f),
       money(baseMoney)
 {
     textureOverlay = *TextureLoader::LoadTextureFromFile("Overlay.png"); // menu
     basicTowerIcon = *TextureLoader::LoadTextureFromFile("Basic Tower.png");
     sniperTowerIcon = *TextureLoader::LoadTextureFromFile("Sniper Tower.png");
+    cannonTowerIcon = *TextureLoader::LoadTextureFromFile("Cannon Tower.png");
 
     // loading levels
     allLevels = loadAllLevelsFromFile("all_levels.json");
@@ -310,6 +311,10 @@ void Game::processEvents(bool &running)
         nextTowerType = TowerType::sniper;
         PlacementModeCurrent = PlacementMode::tower;
     }
+    if (mouseClick && CheckCollisionPointRec(mouse, cannonTowerBtnRect)) {
+    nextTowerType = TowerType::cannon;
+    PlacementModeCurrent = PlacementMode::tower;
+    }
 }
 
 void Game::addUnit(Vector2 spawnPos, EnemyType type)
@@ -401,15 +406,9 @@ void Game::draw()
         // round count and instant back button
         string roundText = "Round: " + to_string(roundCount) + " / 10";
         int textWidth = MeasureText(roundText.c_str(), 30);
-        DrawText(roundText.c_str(), 1488 - textWidth - 30, 9, 30, DARKGRAY); // align to top-right
-        // DrawRectangleRec(instantGameOverBtn, RED);
-        // DrawText("Back",
-        //          instantGameOverBtn.x + 10,
-        //          instantGameOverBtn.y + 10,
-        //          20, WHITE);
+        DrawText(roundText.c_str(), 1488 - textWidth - 30, 9, 30, DARKGRAY);
         DrawNeonButton(instantGameOverBtn, "End Game", SKYBLUE, NEON_PINK, WHITE);
-        // cout << "game over drawn" << endl;
-
+     
         // tower icons
         Color basicTint = (money >= 200) ? NEON_GREEN : NEON_PURPLE;
         DrawTextureEx(basicTowerIcon,
@@ -424,6 +423,13 @@ void Game::draw()
                       0.0f, 1.0f, sniperTint);
         if (nextTowerType == TowerType::sniper)
             DrawRectangleLinesEx(sniperTowerBtnRect, 2, NEON_BLUE);
+        
+        Color cannonTint = (money >= 1000) ? NEON_GREEN : NEON_PURPLE;
+        DrawTextureEx(cannonTowerIcon,
+                      {cannonTowerBtnRect.x, cannonTowerBtnRect.y},
+                      0.0f, 1.0f, cannonTint);
+        if (nextTowerType == TowerType::cannon)
+            DrawRectangleLinesEx(cannonTowerBtnRect, 2, NEON_BLUE);
     }
     // level editor draw
     else if (currentState == GameUIState::LevelEditor)
@@ -521,6 +527,9 @@ void Game::addTower(Vector2 mousePosition)
 
         case TowerType::basic:
             towerCost = 200;
+            break;
+        case TowerType::cannon:
+            towerCost = 1000;
             break;
         }
 
@@ -963,6 +972,7 @@ int Game::calculateUpgradeCost(shared_ptr<Tower> t)
         upgradeCost = 100 + 50 * (t->getTowerLevel() - 1);
         break;
     case TowerType::sniper:
+    {
         int towerLevel = t->getTowerLevel();
         switch (towerLevel)
         {
@@ -974,6 +984,21 @@ int Game::calculateUpgradeCost(shared_ptr<Tower> t)
             break;
         }
         break;
+    }
+    case TowerType::cannon:
+    {
+        int towerLevelCannon = t->getTowerLevel();
+        switch (towerLevelCannon)
+        {
+        case 1:
+            upgradeCost = 600;
+            break;
+        case 2:
+            upgradeCost = 5000;
+            break;
+        }
+        break;
+    }
     }
 
     return upgradeCost;

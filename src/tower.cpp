@@ -11,16 +11,16 @@ const float Tower::angularSpeed = 180.0f * DEG2RAD * 5.0f;
 // const float Tower::attackRange = 5.0f; // attack range in tiles
 
 Tower::Tower(Vector2 setPosition, TowerType setType) :
+    type(setType), // setting tower type 
     position(setPosition),
     angle(0.0f), // angle in radians
-    type(setType), // setting tower type 
     weaponTimer(1.0f) // seconds cooldown for shooting
 {
     switch (type) {
     case TowerType::basic:
         textureTileTower = *TextureLoader::LoadTextureFromFile("Basic Tower.png");
         range = 4.0f;
-        fireCooldown = 1.0f;
+        fireCooldown = 1.5f;
         projectileSpeed = 20.0f;
         projectileMaxDistance = 5.0f;
         projectileDamage = 1;
@@ -29,14 +29,22 @@ Tower::Tower(Vector2 setPosition, TowerType setType) :
     case TowerType::sniper:
         textureTileTower = *TextureLoader::LoadTextureFromFile("Sniper Tower.png");
         range = 7.0f;
-        fireCooldown = 2.5f;
-        projectileSpeed = 20.0f;
-        projectileMaxDistance = 10.0f;
+        fireCooldown = 3.0f;
+        projectileSpeed = 40.0f;
+        projectileMaxDistance = 15.0f;
         projectileDamage = 3;
         break;
-    }
-        weaponTimer.setTo(fireCooldown);
+    case TowerType::cannon:
+        textureTileTower = *TextureLoader::LoadTextureFromFile("Cannon Tower.png");
+        range = 10.0f;
+        fireCooldown = 3.0f;
+        projectileSpeed = 20.0f;
+        projectileMaxDistance = 10.0f;
+        projectileDamage = 2;
+        break;
 
+        weaponTimer.setTo(fireCooldown);
+    }
 }
 
 void Tower::update(float deltaTime, vector<shared_ptr<Unit>>& units, vector<Projectile>& projectiles)
@@ -46,7 +54,7 @@ void Tower::update(float deltaTime, vector<shared_ptr<Unit>>& units, vector<Proj
     // picking target  
     if(auto e = targetEnemy.lock()){
         if(e-> getIsAlive() == false || Vector2Distance(position, e->getPosition()) > range){
-            targetEnemy.reset(); // clear target if it’s dead or out of range 
+            targetEnemy.reset(); 
         }
     }
 
@@ -56,10 +64,9 @@ void Tower::update(float deltaTime, vector<shared_ptr<Unit>>& units, vector<Proj
     }
 
     if(updateAngle(deltaTime)){
-        shoot(projectiles);
+        shoot(projectiles,units);
     }
 }
-
 
 void Tower::draw(int tileSize)
 {
@@ -80,11 +87,10 @@ void Tower::draw(int tileSize)
     DrawText(TextFormat("Lv%d", towerLevel) , position.x * tileSize + 4, position.y * tileSize + 4, 10, BLACK);
 
     if (auto t = targetEnemy.lock()) {
-    Vector2 pos = t->getPosition();
-    DrawCircleLines((int)((pos.x) * tileSize), (int)((pos.y) * tileSize), tileSize * 0.5f, RED);
+        Vector2 pos = t->getPosition();
+        DrawCircleLines((int)((pos.x) * tileSize), (int)((pos.y) * tileSize), tileSize * 0.01f, RED);
     }
 }
-
 
 bool Tower::checkIfOnTile(int x,int y){
     return ((int)position.x == x && (int)position.y == y);
@@ -128,7 +134,7 @@ bool Tower::updateAngle(float deltaTime)
 
         // 2) enemy’s current center‐ed position:
         Vector2 U = e->getPosition();
-        U.x -= 0.5f;   // since your units and towers are centered on tiles
+        U.x -= 0.5f;   
         U.y -= 0.5f;
 
         // 3) enemy’s velocity:
@@ -193,7 +199,7 @@ bool Tower::updateAngle(float deltaTime)
     return false;
 }
 
-void Tower::shoot(vector<Projectile> &projectiles){
+void Tower::shoot(vector<Projectile> &projectiles, vector<shared_ptr<Unit>>& units){
     if(weaponTimer.timeSIsZero()){
         Vector2 towerCenter = { position.x, position.y}; // center of the tower tile
         Vector2 direction = {cosf(angle), sinf(angle)};
@@ -201,14 +207,31 @@ void Tower::shoot(vector<Projectile> &projectiles){
         switch (type){
         case TowerType::basic:
             projectiles.push_back(Projectile(towerCenter, direction, 
-                projectileSpeed, projectileMaxDistance, projectileDamage));
+                projectileSpeed, projectileMaxDistance, projectileDamage, ProjectileType::basic));
                 weaponTimer.setTo(fireCooldown); // reset the timer for the next shot
                 break;
         case TowerType::sniper:
             projectiles.push_back(Projectile(towerCenter, direction, 
-                projectileSpeed, projectileMaxDistance, projectileDamage));
+                projectileSpeed, projectileMaxDistance, projectileDamage, ProjectileType::sniper));
                 weaponTimer.setTo(fireCooldown); // reset the timer for the next shot
-                break;       
+                break;   
+        case TowerType::cannon:
+            Vector2 targetPosittion = position;
+            if(auto t = targetEnemy.lock()){
+                targetPosittion = t->getPosition();
+            }
+            targetPosittion.x += 0.5f; 
+            targetPosittion.y += 0.5f; 
+            projectiles.push_back(Projectile(towerCenter, direction, 
+                projectileSpeed, projectileMaxDistance, projectileDamage, ProjectileType::cannon, targetPosittion));
+            // for (auto &unit : units) {
+            //     if (unit && unit->getIsAlive() &&
+            //         Vector2Distance(unit->getPosition(), position) <= range) {
+            //         unit->damage(projectileDamage);
+            //     }
+            // }
+            weaponTimer.setTo(fireCooldown); // reset the timer for the next shot
+            break; 
         }
 
     }
@@ -232,10 +255,16 @@ void Tower::upgrade() {
             projectileMaxDistance += 3.0f;
             fireCooldown = max(0.5f, fireCooldown - 0.5f);
             break;
+        case TowerType::cannon:
+            range += 0.5f;
+            projectileDamage += 1;
+            fireCooldown = max(0.5f, fireCooldown - 0.2f);
+            break;
     }
 
     weaponTimer.setTo(fireCooldown);
 }
+
 Vector2 Tower::getPosition() const {
     return position;
 }

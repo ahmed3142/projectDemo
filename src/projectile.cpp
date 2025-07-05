@@ -1,54 +1,124 @@
 #include "projectile.h"
 
 const float Projectile::size = 0.2f;
+bool Projectile::explosionTexturesLoaded = false;
+Texture2D Projectile::explosionAnimation[50];
 
-Projectile::Projectile(Vector2 setPosition, Vector2 setDirection, float spd, float maxDist, int dmg)
-    : position(setPosition), direction(Vector2Normalize(setDirection)),
-      speed(spd), maxDistance(maxDist), damage(dmg)
+void Projectile::loadExplosionTextures() {
+    if(!explosionTexturesLoaded) {
+        for(int i = 0; i < totalBlastFrames; i++) { 
+            string numstr = to_string(i + 1);
+            // while (numstr.length() < 5) {
+            //     numstr = "0" + numstr;
+            // }
+            string filename = "cannonExplosion/" + numstr + ".gif";
+            explosionAnimation[i] = *TextureLoader::LoadTextureFromFile(filename);
+        }
+    }
+}
+
+Projectile::Projectile(Vector2 setPosition, Vector2 setDirection, float spd, float maxDist, int dmg, ProjectileType projtype, Vector2 setExplosionCenter)
+    : position(setPosition),
+      direction(Vector2Normalize(setDirection)),
+      speed(spd),
+      maxDistance(maxDist),
+      damage(dmg),
+      type(projtype),
+      collided(false),
+      isExploding(false),
+      explosionFinished(false),
+      currentBlastFrame(0),
+      areaDamageApplied(false),
+      explosionCenter(setExplosionCenter)
 {
     bulletTex = *TextureLoader::LoadTextureFromFile("Bullet2.png");
+
+    if(type == ProjectileType::cannon && !explosionTexturesLoaded) {
+        loadExplosionTextures();
+        explosionTexturesLoaded = true;
+    }
 }
 
+void Projectile::update(float deltaTime, vector<shared_ptr<Unit>> units)
+{
+    if (!isExploding && !collided) { 
+        float moveDistance = speed * deltaTime;
+        position += direction * moveDistance;
+        distanceTraveled += moveDistance;
 
-void Projectile::update(float deltaTime, vector<shared_ptr<Unit>> units){
-    float moveDistance = speed * deltaTime;
-    position+= direction * moveDistance;
-    distanceTraveled += moveDistance;
-    if (distanceTraveled >= maxDistance) {
-        collided = true; // Marking as collided if max distance is reached
+        
+        checkCollisionWithEnemy(units); 
+
+        
+        if (distanceTraveled >= maxDistance) {
+            collided = true; 
+            // if (type == ProjectileType::cannon) {
+                // isExploding = true; 
+                // explosionFinished = false;
+            // }
+        }
     }
 
-    checkCollisionWithEnemy(units);
+    if (isExploding) { 
+        if(type == ProjectileType::cannon && !areaDamageApplied) {
+            areaDamageApplied = true;
+            for(auto &unit : units) {
+                if(unit && unit->getIsAlive()){
+                    float dist = Vector2Distance(position, unit->getPosition());
+                    if(dist <= explosionRadius) {
+                        unit->damage(damage);
+                    }
+                }
+            }
+        }
+        blastAnimationTimer.countDown(deltaTime);
+        if (blastAnimationTimer.timeSIsZero()) {
+            currentBlastFrame++;
+            if (currentBlastFrame >= totalBlastFrames) {
+                explosionFinished = true;
+                
+                currentBlastFrame = totalBlastFrames - 1; //keeps showing the last frame
+            }
+            blastAnimationTimer.resetToMax();
+        }
+    }
 }
 
-void Projectile::draw(int tileSize) {
-    // Get the texture’s pixel dimensions:
-    // int w = bulletTex.width;
-    // int h = bulletTex.height;
-
-    // Compute screen position in pixels, centering the texture on (pos.x, pos.y):
-    float drawX = position.x * tileSize;
-    float drawY = position.y * tileSize;
-    
-    DrawTexture(bulletTex, (int)drawX, (int)drawY, WHITE);
-    DrawCircleV(Vector2{(position.x + 0.5f) * tileSize , (position.y + 0.5f) * tileSize}, (size * tileSize) / 2.0f, Fade(RED, 0.2f));
+void Projectile::draw(int tileSize)
+{
+    if (isExploding) { 
+        DrawTexture(explosionAnimation[currentBlastFrame],
+                    (explosionCenter.x * tileSize) - 50, (explosionCenter.y * tileSize) - 50, WHITE);
+    } else { 
+        DrawTexture(bulletTex, (int)((position.x) * tileSize), (int)((position.y) * tileSize), WHITE);
+    }
 }
 
 bool Projectile::checkCollision() {
-    return collided;
+    if (type == ProjectileType::cannon) {
+        return explosionFinished || (collided && !isExploding);
+    } else {
+        return collided;
+    }
 }
 
 void Projectile::checkCollisionWithEnemy(vector<shared_ptr<Unit>> units){
-    if(!collided){
-        for(int i=0; i<(int)units.size() && collided==false; i++){
+    if(!collided && !isExploding){ 
+        for(int i=0; i<(int)units.size() && !collided; i++){
             auto &unit = units[i];
-            // cout << unit->getCurrentHealth() << " " << i << endl; 
-            Vector2 projectilePosition;
-            projectilePosition.x = position.x + 0.5f;
-            projectilePosition.y = position.y + 0.5f;
-            if(unit != nullptr && unit->getIsAlive() && unit->checkOverlap(projectilePosition, size)){
+            Vector2 projectileCenter = {position.x, position.y};
+            //if(type != ProjectileType::cannon) {
+                projectileCenter.x += 0.5f;
+                projectileCenter.y += 0.5f; 
+            //}
+            if(unit != nullptr && unit->getIsAlive() && unit->checkOverlap(projectileCenter, size)){
                 unit->damage(damage);
-                collided = true;
+                collided = true; 
+                if(type == ProjectileType::cannon) {
+                    isExploding = true; 
+                    explosionCenter = position;
+                }
+                break;
             }
         }
     }

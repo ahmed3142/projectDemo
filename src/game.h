@@ -137,6 +137,7 @@ class Game
     // icons and buttons
     Texture2D basicTowerIcon;
     Texture2D sniperTowerIcon;
+    Texture2D cannonTowerIcon;
 
     void DrawNeonButton(Rectangle rect, const char* label, Color normalColor, Color hoverColor, Color clickColor);
 
@@ -162,6 +163,8 @@ class Game
 
     Rectangle basicTowerBtnRect   = { 1430, 48, tileSize , tileSize };
     Rectangle sniperTowerBtnRect  = { 1430, 48 + tileSize, tileSize,tileSize };
+    Rectangle cannonTowerBtnRect = {1430, 48 + 2 * tileSize, tileSize, tileSize};
+
 
     // main menu animation
     Texture2D mainMenuBackground[500];
