@@ -17,29 +17,28 @@ Tower::Tower(Vector2 setPosition, TowerType setType) :
     weaponTimer(1.0f) // seconds cooldown for shooting
 {
     towerShootSound = LoadSound("D:/ProjectUpdate/projectDemo-Today/projectDemo-Today/src/assets/Audios/shootingTower.mp3");
-
     switch (type) {
     case TowerType::basic:
         textureTileTower = *TextureLoader::LoadTextureFromFile("Basic Tower2.png");
         range = 4.0f;
-        fireCooldown = 1.5f;
+        fireCooldown = 1.0f;
         projectileSpeed = 20.0f;
         projectileMaxDistance = 5.0f;
-        projectileDamage = 1;
+        projectileDamage = 2;
         break;
 
     case TowerType::sniper:
         textureTileTower = *TextureLoader::LoadTextureFromFile("Sniper Tower2.png");
         range = 7.0f;
-        fireCooldown = 3.0f;
+        fireCooldown = 2.0f;
         projectileSpeed = 40.0f;
         projectileMaxDistance = 15.0f;
         projectileDamage = 3;
         break;
     case TowerType::cannon:
         textureTileTower = *TextureLoader::LoadTextureFromFile("Cannon Tower2.png");
-        range = 10.0f;
-        fireCooldown = 3.0f;
+        range = 3.0f;
+        fireCooldown = 1.5f;
         projectileSpeed = 20.0f;
         projectileMaxDistance = 10.0f;
         projectileDamage = 2;
@@ -253,20 +252,21 @@ void Tower::upgrade() {
     switch (type) {
         case TowerType::basic:
             range += 0.5f;
-            // projectileDamage += 1;
-            fireCooldown = max(0.0f, fireCooldown - 0.3f);
+            projectileDamage += 1;
+            fireCooldown = max(0.1f, fireCooldown - 0.4f);
+            projectileMaxDistance += 0.5f;
             break;
 
         case TowerType::sniper:
-            range += 3.0f;
+            range += 2.0f;
             projectileDamage += 1;
-            projectileMaxDistance += 3.0f;
-            fireCooldown = max(0.5f, fireCooldown - 0.5f);
+            projectileMaxDistance += 2.0f;
+            fireCooldown = max(0.3f, fireCooldown - 0.5f);
             break;
         case TowerType::cannon:
             range += 0.5f;
-            projectileDamage += 1;
-            fireCooldown = max(0.5f, fireCooldown - 0.2f);
+            projectileDamage += 3;
+            fireCooldown = max(0.3f, fireCooldown - 0.3f);
             break;
     }
 

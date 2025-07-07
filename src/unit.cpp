@@ -19,21 +19,21 @@ Unit::Unit(Vector2 setPosition, EnemyType enemyType) :
             texture = *TextureLoader::LoadTextureFromFile("Unit2.png");
             speed = 1.0f;
             size = 0.4f;
-            maxHealth = 3;
+            maxHealth = 5;
             break;
 
         case EnemyType::fast:
             texture = *TextureLoader::LoadTextureFromFile("Unit2.png");
             speed = 2.0f;
             size = 0.3f;
-            maxHealth = 1;
+            maxHealth = 3;
             break;
 
         case EnemyType::tank:
             texture = *TextureLoader::LoadTextureFromFile("Unit2.png");
             speed = 0.5f;
             size = 0.6f;
-            maxHealth = 10;
+            maxHealth = 70;
             break;
         case EnemyType::physics:
             texture = *TextureLoader::LoadTextureFromFile("Unit2.png");
@@ -45,7 +45,7 @@ Unit::Unit(Vector2 setPosition, EnemyType enemyType) :
             texture = *TextureLoader::LoadTextureFromFile("Unit2.png");
             speed = 0.2f;
             size = 1.5f;
-            maxHealth = 1000;
+            maxHealth = 10000;
             break;
     }
 

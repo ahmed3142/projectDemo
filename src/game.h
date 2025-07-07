@@ -89,9 +89,9 @@ class Game
     vector<LevelData> allLevels;
 
     // money
-    int baseMoney = 1000;
+    int baseMoney = 5000;
     int money = 0;
-    int baseIncome = 500;
+    int baseIncome = 2000;
     int incomeIncrement = 100;
 
     int calculateUpgradeCost(shared_ptr<Tower> t);
@@ -169,7 +169,7 @@ class Game
     Rectangle gameOverRestartBtn = {600, 460, 300, 60};
     Rectangle instantGameOverBtn   = {1280,  852, 180, 52};
 
-    Rectangle basicTowerBtnRect   = { 1430, 48, tileSize , tileSize };
+    Rectangle basicTowerBtnRect   = { 1430 - 50, 48 + tileSize + 5, tileSize , tileSize };
     Rectangle sniperTowerBtnRect  = { 1430, 48 + tileSize + 5, tileSize,tileSize };
     Rectangle cannonTowerBtnRect = {1430, 48 + 2 * tileSize + 10, tileSize, tileSize};
     Rectangle settingsBtn2 = {1430 , 48 + 17 * tileSize + 10, tileSize, tileSize}; 

@@ -33,6 +33,8 @@ class Projectile
     static bool explosionTexturesLoaded;
     static Texture2D explosionAnimation[50];
 
+    Sound cannonExplosionSound;
+
     // cannon area damage
     float explosionRadius = 1.0f;
     bool areaDamageApplied = false;

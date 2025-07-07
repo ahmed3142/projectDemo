@@ -91,7 +91,7 @@ void Game::processEvents(bool &running)
     {
         if (mouseClick && CheckCollisionPointRec(mouse, startBtn))
         {
-            selectLevelIndex = 1;
+            selectLevelIndex = 3;
             level.loadFromData(allLevels[selectLevelIndex]);
             currentState = GameUIState::Playing;
         }
@@ -400,7 +400,7 @@ void Game::draw()
             int textY = 912 / 2 - 100;
             DrawText(
                 "Round completed! Press SPACE to start a new round.",
-                textX, textY, 20, BLACK);
+                textX, textY, 20, NEON_GREEN);
         }
 
         // hovered-tower range circle
@@ -519,16 +519,16 @@ void Game::updateRoundSpawn(float deltaTime)
         switch (type)
         {
         case EnemyType::fast:
-            cooldown = 0.2f;
+            cooldown = 0.1f;
             break;
         case EnemyType::basic:
-            cooldown = 1.0f;
+            cooldown = 0.2f;
             break;
         case EnemyType::tank:
-            cooldown = 3.0f;
+            cooldown = 1.5f;
             break;
         case EnemyType::physics:
-            cooldown = 0.2f;
+            cooldown = 0.1f;
             break;
         case EnemyType::finalBoss:
             cooldown = 5.0f;
@@ -678,16 +678,16 @@ void Game::newRound()
     if (roundCount == 1)
     {
         money = baseMoney;
-        baseIncome = 500;
+        baseIncome = 2000;
         targetHealth = baseHealth;
     }
 
     // setup enemy spawn
     spawnQueue.clear();
 
-    int fastCount = 10 + roundCount * 2;
-    int basicCount = 5 + roundCount * 3;
-    int tankCount = 2 + roundCount / 2;
+    int fastCount = 10 + roundCount * 200;
+    int basicCount = 5 + roundCount * 150;
+    int tankCount = 2 + roundCount * 10;
     int physicsCount = 10;
     int finalBossCount = 0;
 
@@ -697,9 +697,9 @@ void Game::newRound()
 
     if (roundCount == maxRounds)
     {
-        fastCount = 60;
-        basicCount = 65;
-        tankCount = 15;
+        fastCount = 6000;
+        basicCount = 650;
+        tankCount = 200;
         finalBossCount = 1;
     }
 
@@ -833,13 +833,13 @@ void Game::updateUnit(float deltaTime)
             switch (unit->getEnemyType())
             {
             case EnemyType::basic:
-                money += 30;
+                money += 10;
                 break;
             case EnemyType::fast:
-                money += 20;
+                money += 5;
                 break;
             case EnemyType::tank:
-                money += 80;
+                money += 50;
                 break;
             }
 
@@ -1126,7 +1126,7 @@ int Game::calculateUpgradeCost(shared_ptr<Tower> t)
         switch (towerLevelCannon)
         {
         case 1:
-            upgradeCost = 600;
+            upgradeCost = 1000;
             break;
         case 2:
             upgradeCost = 5000;

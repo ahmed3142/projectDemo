@@ -33,6 +33,9 @@ Projectile::Projectile(Vector2 setPosition, Vector2 setDirection, float spd, flo
 {
     bulletTex = *TextureLoader::LoadTextureFromFile("Bullet4.png");
 
+    cannonExplosionSound = LoadSound("D:/ProjectUpdate/projectDemo-Today/projectDemo-Today/src/assets/Audios/cannonBlast.mp3");
+
+
     if(type == ProjectileType::cannon && !explosionTexturesLoaded) {
         loadExplosionTextures();
         explosionTexturesLoaded = true;
@@ -116,6 +119,7 @@ void Projectile::checkCollisionWithEnemy(vector<shared_ptr<Unit>> units){
                 collided = true; 
                 if(type == ProjectileType::cannon) {
                     isExploding = true; 
+                    PlaySound(cannonExplosionSound);
                     explosionCenter = position;
                 }
                 break;
